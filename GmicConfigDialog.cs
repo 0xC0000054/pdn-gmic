@@ -65,6 +65,7 @@ namespace GmicEffectPlugin
         {
             base.OnLoad(e);
 
+            Opacity = 0;
             Visible = false;
 
             DialogResult = DialogResult.Cancel;
