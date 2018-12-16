@@ -21,6 +21,7 @@
 
 using System.Drawing;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace GmicEffectPlugin
@@ -32,6 +33,26 @@ namespace GmicEffectPlugin
         /// </summary>
         /// <returns>The clipboard image, if present; otherwise, null.</returns>
         public static Bitmap GetImage()
+        {
+            if (Thread.CurrentThread.GetApartmentState() == ApartmentState.STA)
+            {
+                return GetImageFromClipboard();
+            }
+            else
+            {
+                ClipboardThreadingHelper helper = new ClipboardThreadingHelper();
+
+                Thread thread = new Thread(new ThreadStart(helper.DoWork));
+                thread.SetApartmentState(ApartmentState.STA);
+
+                thread.Start();
+                thread.Join();
+
+                return helper.Image;
+            }
+        }
+
+        private static Bitmap GetImageFromClipboard()
         {
             Bitmap image = null;
 
@@ -63,6 +84,20 @@ namespace GmicEffectPlugin
             }
 
             return image;
+        }
+
+        private sealed class ClipboardThreadingHelper
+        {
+            public Bitmap Image
+            {
+                get;
+                private set;
+            }
+
+            public void DoWork()
+            {
+                Image = GetImageFromClipboard();
+            }
         }
     }
 }
