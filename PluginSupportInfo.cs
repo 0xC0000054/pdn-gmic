@@ -63,7 +63,7 @@ namespace GmicEffectPlugin
         {
             get
             {
-                return new Uri("http://www.getpaint.net/redirect/plugins.html");
+                return new Uri("https://forums.getpaint.net/topic/113564-gmic/");
             }
         }
     }
