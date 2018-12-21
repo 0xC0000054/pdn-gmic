@@ -167,7 +167,6 @@ namespace GmicEffectPlugin
                 }
             }
 
-
             base.OnSetRenderInfo(parameters, dstArgs, srcArgs);
         }
 
