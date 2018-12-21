@@ -54,7 +54,7 @@ namespace GmicEffectPlugin
 
         protected override void InitDialogFromToken(EffectConfigToken effectTokenCopy)
         {
-            // Not required as the token is only used to send the finished image to Paint.NET
+            // Not required as the token is only used to send the finished image to Paint.NET.
         }
 
         protected override void InitTokenFromDialog()
