@@ -69,7 +69,6 @@ namespace GmicEffectPlugin
             base.OnLoad(e);
 
             Opacity = 0;
-            Visible = false;
 
             if (File.Exists(GmicPath))
             {
