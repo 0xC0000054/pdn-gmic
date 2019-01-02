@@ -131,7 +131,7 @@ namespace GmicEffectPlugin
                                     {
                                         using (Bitmap image = new Bitmap(outputPath))
                                         {
-                                            token.Surface = Surface.CopyFromBitmap(image);
+                                            token.Surface = GmicConfigDialog.CopyFromGmicImage(image, srcArgs.Size);
                                         }
                                     }
                                     catch (ArgumentException)

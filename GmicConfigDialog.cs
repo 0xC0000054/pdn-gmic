@@ -47,6 +47,45 @@ namespace GmicEffectPlugin
             workerThread = null;
         }
 
+        /// <summary>
+        /// Creates a Paint.NET Surface from the G'MIC image.
+        /// </summary>
+        /// <param name="image">The G'MIC image.</param>
+        /// <param name="surfaceSize">The size of the resulting Paint.NET surface.</param>
+        /// <returns>The created surface.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="image"/> is null.</exception>
+        internal static unsafe Surface CopyFromGmicImage(Bitmap image, Size surfaceSize)
+        {
+            if (image == null)
+            {
+                throw new ArgumentNullException(nameof(image));
+            }
+
+            Surface surface = new Surface(surfaceSize.Width, surfaceSize.Height);
+
+            int imageWidth = Math.Min(image.Width, surfaceSize.Width);
+            int imageHeight = Math.Min(image.Height, surfaceSize.Height);
+
+            BitmapData bitmapData = image.LockBits(new Rectangle(0, 0, imageWidth, imageHeight), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            try
+            {
+                byte* scan0 = (byte*)bitmapData.Scan0;
+                int stride = bitmapData.Stride;
+                ulong rowLength = (ulong)imageWidth * ColorBgra.SizeOf;
+
+                for (int y = 0; y < imageHeight; y++)
+                {
+                    Buffer.MemoryCopy(scan0 + (y * stride), surface.GetRowAddressUnchecked(y), rowLength, rowLength);
+                }
+            }
+            finally
+            {
+                image.UnlockBits(bitmapData);
+            }
+
+            return surface;
+        }
+
         protected override void InitialInitToken()
         {
             theEffectToken = new GmicConfigToken();
@@ -136,7 +175,7 @@ namespace GmicEffectPlugin
                             {
                                 using (Bitmap image = new Bitmap(outputPath))
                                 {
-                                    surface = Surface.CopyFromBitmap(image);
+                                    surface = CopyFromGmicImage(image, EffectSourceSurface.Size);
                                 }
                                 result = DialogResult.OK;
                             }
