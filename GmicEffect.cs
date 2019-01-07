@@ -53,7 +53,7 @@ namespace GmicEffectPlugin
             }
         }
 
-        public GmicEffect() : base(StaticName, StaticImage, "Advanced", EffectFlags.Configurable)
+        public GmicEffect() : base(StaticName, StaticImage, "Advanced", new EffectOptions { Flags = EffectFlags.Configurable })
         {
             repeatEffect = true;
         }
