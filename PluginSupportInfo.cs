@@ -39,7 +39,7 @@ namespace GmicEffectPlugin
         {
             get
             {
-                return ((AssemblyCompanyAttribute)typeof(PluginSupportInfo).Assembly.GetCustomAttributes(typeof(AssemblyCompanyAttribute), false)[0]).Company;
+                return "Nicholas Hayes, Sébastien Fourey and David Tschumperlé";
             }
         }
 

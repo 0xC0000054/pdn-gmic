@@ -30,7 +30,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("null54")]
 [assembly: AssemblyProduct("GmicEffect")]
-[assembly: AssemblyCopyright("Copyright © 2019 Nicholas Hayes (aka null54)")]
+[assembly: AssemblyCopyright("Copyright © 2019 Nicholas Hayes (aka null54), Sébastien Fourey and David Tschumperlé")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
