@@ -23,9 +23,9 @@ using GmicEffectPlugin.Properties;
 using PaintDotNet;
 using PaintDotNet.Effects;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -38,6 +38,8 @@ namespace GmicEffectPlugin
     {
         private Surface surface;
         private Thread workerThread;
+        private GmicPipeServer server;
+        private bool haveOutputImage;
 
         internal static readonly string GmicPath = Path.Combine(Path.GetDirectoryName(typeof(GmicEffect).Assembly.Location), "gmic\\gmic_paintdotnet_qt.exe");
 
@@ -45,45 +47,20 @@ namespace GmicEffectPlugin
         {
             surface = null;
             workerThread = null;
+            server = new GmicPipeServer();
+            server.OutputImageChanged += UpdateOutputImage;
+            haveOutputImage = false;
         }
 
-        /// <summary>
-        /// Creates a Paint.NET Surface from the G'MIC image.
-        /// </summary>
-        /// <param name="image">The G'MIC image.</param>
-        /// <param name="surfaceSize">The size of the resulting Paint.NET surface.</param>
-        /// <returns>The created surface.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="image"/> is null.</exception>
-        internal static unsafe Surface CopyFromGmicImage(Bitmap image, Size surfaceSize)
+        protected override void Dispose(bool disposing)
         {
-            if (image == null)
+            if (disposing && server != null)
             {
-                throw new ArgumentNullException(nameof(image));
+                server.Dispose();
+                server = null;
             }
 
-            Surface surface = new Surface(surfaceSize.Width, surfaceSize.Height);
-
-            int imageWidth = Math.Min(image.Width, surfaceSize.Width);
-            int imageHeight = Math.Min(image.Height, surfaceSize.Height);
-
-            BitmapData bitmapData = image.LockBits(new Rectangle(0, 0, imageWidth, imageHeight), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-            try
-            {
-                byte* scan0 = (byte*)bitmapData.Scan0;
-                int stride = bitmapData.Stride;
-                ulong rowLength = (ulong)imageWidth * ColorBgra.SizeOf;
-
-                for (int y = 0; y < imageHeight; y++)
-                {
-                    Buffer.MemoryCopy(scan0 + (y * stride), surface.GetRowAddressUnchecked(y), rowLength, rowLength);
-                }
-            }
-            finally
-            {
-                image.UnlockBits(bitmapData);
-            }
-
-            return surface;
+            base.Dispose(disposing);
         }
 
         protected override void InitialInitToken()
@@ -129,64 +106,38 @@ namespace GmicEffectPlugin
 
         private void GmicThread()
         {
-            DialogResult result = DialogResult.Cancel;
-
             try
             {
-                using (TempDirectory tempDir = new TempDirectory())
+                List<GmicLayer> layers = new List<GmicLayer>
                 {
-                    string firstLayerPath = tempDir.GetRandomFileNameWithExtension(".png");
+                    new GmicLayer(EffectSourceSurface, false)
+                };
 
-                    using (Bitmap source = EffectSourceSurface.CreateAliasedBitmap())
+                using (Bitmap clipboardImage = ClipboardUtil.GetImage())
+                {
+                    // Some G'MIC filters require the image to have more than one layer.
+                    // Because use Paint.NET does not currently support Effect plug-ins accessing
+                    // other layers in the document, allowing the user to place the second layer on
+                    // the clipboard is supported as a workaround.
+
+                    if (clipboardImage != null && clipboardImage.Width == EffectSourceSurface.Width && clipboardImage.Height == EffectSourceSurface.Height)
                     {
-                        source.Save(firstLayerPath, ImageFormat.Png);
+                        layers.Add(new GmicLayer(Surface.CopyFromBitmap(clipboardImage), true));
                     }
+                }
 
-                    string secondLayerPath = string.Empty;
+                server.AddLayers(layers);
 
-                    using (Bitmap clipboardImage = ClipboardUtil.GetImage())
-                    {
-                        // Some G'MIC filters require the image to have more than one layer.
-                        // Because use Paint.NET does not currently support Effect plug-ins accessing
-                        // other layers in the document, allowing the user to place the second layer on
-                        // the clipboard is supported as a workaround.
+                server.Start();
 
-                        if (clipboardImage != null && clipboardImage.Width == EffectSourceSurface.Width && clipboardImage.Height == EffectSourceSurface.Height)
-                        {
-                            secondLayerPath = tempDir.GetRandomFileNameWithExtension(".png");
+                string arguments = string.Format(CultureInfo.InvariantCulture, ".PDN {0}", server.FullPipeName);
 
-                            clipboardImage.Save(secondLayerPath, ImageFormat.Png);
-                        }
-                    }
-                    string outputPath = tempDir.GetRandomFileNameWithExtension(".png");
+                using (Process process = new Process())
+                {
+                    process.StartInfo = new ProcessStartInfo(GmicPath, arguments);
 
-                    string arguments = string.Format(CultureInfo.InvariantCulture, "\"{0}\" \"{1}\" \"{2}\"", firstLayerPath, secondLayerPath, outputPath);
-
-                    using (Process process = new Process())
-                    {
-                        process.StartInfo = new ProcessStartInfo(GmicPath, arguments);
-
-                        process.Start();
-                        process.WaitForExit();
-
-                        if (process.ExitCode == 0)
-                        {
-                            try
-                            {
-                                using (Bitmap image = new Bitmap(outputPath))
-                                {
-                                    surface = CopyFromGmicImage(image, EffectSourceSurface.Size);
-                                }
-                                result = DialogResult.OK;
-                            }
-                            catch (ArgumentException)
-                            {
-                            }
-                            catch (FileNotFoundException)
-                            {
-                            }
-                        }
-                    }
+                    process.Start();
+                    process.WaitForExit();
                 }
             }
             catch (ArgumentException ex)
@@ -206,20 +157,55 @@ namespace GmicEffectPlugin
                 ShowErrorMessage(ex.Message);
             }
 
-            BeginInvoke(new Action<DialogResult>(GmicThreadFinished), result);
+            BeginInvoke(new Action(GmicThreadFinished));
         }
 
-        private void GmicThreadFinished(DialogResult result)
+        private void GmicThreadFinished()
         {
             workerThread.Join();
             workerThread = null;
 
-            DialogResult = result;
-            if (result == DialogResult.OK)
+            DialogResult = haveOutputImage ? DialogResult.OK : DialogResult.Cancel;
+            if (DialogResult == DialogResult.OK)
             {
                 FinishTokenUpdate();
             }
             Close();
+        }
+
+        private void UpdateOutputImage(object sender, EventArgs e)
+        {
+            Surface output = server.Output;
+
+            if (output != null)
+            {
+                if (surface == null)
+                {
+                    surface = new Surface(EffectSourceSurface.Width, EffectSourceSurface.Height);
+                }
+                else
+                {
+                    if (output.Width < surface.Width || output.Height < surface.Height)
+                    {
+                        surface.Clear(ColorBgra.TransparentBlack);
+                    }
+                }
+
+                surface.CopySurface(output);
+                haveOutputImage = true;
+
+                // The DialogResult property is not set here because it would close the dialog
+                // and there is no way to tell if the user clicked "Apply" or "Ok".
+                // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
+                if (InvokeRequired)
+                {
+                    Invoke(new Action(FinishTokenUpdate));
+                }
+                else
+                {
+                    FinishTokenUpdate();
+                }
+            }
         }
 
         private DialogResult ShowErrorMessage(string message)

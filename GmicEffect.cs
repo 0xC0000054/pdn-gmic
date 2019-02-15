@@ -23,6 +23,7 @@ using GmicEffectPlugin.Properties;
 using PaintDotNet;
 using PaintDotNet.Effects;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
@@ -86,16 +87,21 @@ namespace GmicEffectPlugin
                 {
                     try
                     {
-                        using (TempDirectory tempDir = new TempDirectory())
+                        using (GmicPipeServer server = new GmicPipeServer())
                         {
-                            string firstLayerPath = tempDir.GetRandomFileNameWithExtension(".png");
-
-                            using (Bitmap source = srcArgs.Surface.CreateAliasedBitmap())
+                            server.OutputImageChanged += (s, e) =>
                             {
-                                source.Save(firstLayerPath, System.Drawing.Imaging.ImageFormat.Png);
-                            }
+                                if (server.Output != null)
+                                {
+                                    token.Surface = new Surface(srcArgs.Width, srcArgs.Height);
+                                    token.Surface.CopySurface(server.Output);
+                                }
+                            };
 
-                            string secondLayerPath = string.Empty;
+                            List<GmicLayer> layers = new List<GmicLayer>
+                            {
+                                new GmicLayer(srcArgs.Surface, false)
+                            };
 
                             using (Bitmap clipboardImage = ClipboardUtil.GetImage())
                             {
@@ -106,17 +112,15 @@ namespace GmicEffectPlugin
 
                                 if (clipboardImage != null && clipboardImage.Width == srcArgs.Width && clipboardImage.Height == srcArgs.Height)
                                 {
-                                    secondLayerPath = tempDir.GetRandomFileNameWithExtension(".png");
-
-                                    clipboardImage.Save(secondLayerPath, System.Drawing.Imaging.ImageFormat.Png);
+                                    layers.Add(new GmicLayer(Surface.CopyFromBitmap(clipboardImage), true));
                                 }
                             }
 
-                            string outputPath = tempDir.GetRandomFileNameWithExtension(".png");
+                            server.AddLayers(layers);
 
-                            string arguments = string.Format(CultureInfo.InvariantCulture,
-                                                             "\"{0}\" \"{1}\" \"{2}\" reapply",
-                                                             firstLayerPath, secondLayerPath, outputPath);
+                            server.Start();
+
+                            string arguments = string.Format(CultureInfo.InvariantCulture, ".PDN {0} reapply", server.FullPipeName);
 
                             using (Process process = new Process())
                             {
@@ -124,23 +128,6 @@ namespace GmicEffectPlugin
 
                                 process.Start();
                                 process.WaitForExit();
-
-                                if (process.ExitCode == 0)
-                                {
-                                    try
-                                    {
-                                        using (Bitmap image = new Bitmap(outputPath))
-                                        {
-                                            token.Surface = GmicConfigDialog.CopyFromGmicImage(image, srcArgs.Size);
-                                        }
-                                    }
-                                    catch (ArgumentException)
-                                    {
-                                    }
-                                    catch (FileNotFoundException)
-                                    {
-                                    }
-                                }
                             }
                         }
                     }

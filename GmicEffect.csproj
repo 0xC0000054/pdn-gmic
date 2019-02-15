@@ -63,6 +63,8 @@
     </Compile>
     <Compile Include="GmicConfigToken.cs" />
     <Compile Include="GmicEffect.cs" />
+    <Compile Include="GmicLayer.cs" />
+    <Compile Include="GmicPipeServer.cs" />
     <Compile Include="PluginSupportInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -70,7 +72,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="TempDirectory.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
