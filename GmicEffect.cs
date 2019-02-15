@@ -110,7 +110,7 @@ namespace GmicEffectPlugin
                                 // other layers in the document, allowing the user to place the second layer on
                                 // the clipboard is supported as a workaround.
 
-                                if (clipboardImage != null && clipboardImage.Width == srcArgs.Width && clipboardImage.Height == srcArgs.Height)
+                                if (clipboardImage != null)
                                 {
                                     layers.Add(new GmicLayer(Surface.CopyFromBitmap(clipboardImage), true));
                                 }
