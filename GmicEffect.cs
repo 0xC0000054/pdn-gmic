@@ -66,7 +66,7 @@ namespace GmicEffectPlugin
             return new GmicConfigDialog();
         }
 
-        private void ShowErrorMessage(string message)
+        private static void ShowErrorMessage(string message)
         {
             MessageBox.Show(message, StaticName, MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
