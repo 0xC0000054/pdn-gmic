@@ -468,10 +468,7 @@ namespace GmicEffectPlugin
 
                 try
                 {
-
-                    long memoryMappedFileLength = surface.Scan0.Length;
-
-                    MemoryMappedFile file = MemoryMappedFile.CreateNew(mapName, memoryMappedFileLength);
+                    MemoryMappedFile file = MemoryMappedFile.CreateNew(mapName, surface.Scan0.Length);
                     memoryMappedFiles.Add(file);
 
                     using (MemoryMappedViewAccessor accessor = file.CreateViewAccessor())
