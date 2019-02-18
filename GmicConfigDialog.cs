@@ -138,6 +138,11 @@ namespace GmicEffectPlugin
 
                     process.Start();
                     process.WaitForExit();
+
+                    if (process.ExitCode == 3)
+                    {
+                        ShowErrorMessage(Resources.ImageTooLargeForX86);
+                    }
                 }
             }
             catch (ArgumentException ex)

@@ -68,5 +68,14 @@ namespace GmicEffectPlugin.Properties {
                 return ResourceManager.GetString("GmicNotFound", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The image is too large for the 32-bit version of G&apos;MIC-Qt..
+        /// </summary>
+        internal static string ImageTooLargeForX86 {
+            get {
+                return ResourceManager.GetString("ImageTooLargeForX86", resourceCulture);
+            }
+        }
     }
 }
