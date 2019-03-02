@@ -90,8 +90,11 @@ namespace GmicEffectPlugin
         /// </summary>
         /// <param name="collection">The collection.</param>
         /// <exception cref="ArgumentNullException"><paramref name="collection"/> is null.</exception>
+        /// <exception cref="ObjectDisposedException">The class has been disposed.</exception>
         public void AddLayers(IEnumerable<GmicLayer> collection)
         {
+            VerifyNotDisposed();
+
             layers.AddRange(collection);
         }
 
@@ -132,8 +135,10 @@ namespace GmicEffectPlugin
         /// Starts the server.
         /// </summary>
         /// <exception cref="InvalidOperationException">Must call AddLayers with at least one layer before calling Start.</exception>
+        /// <exception cref="ObjectDisposedException">The class has been disposed.</exception>
         public void Start()
         {
+            VerifyNotDisposed();
             if (layers.Count == 0)
             {
                 throw new InvalidOperationException("Must call AddLayers with at least one layer before calling Start.");
@@ -600,6 +605,14 @@ namespace GmicEffectPlugin
         private void OnOutputImageChanged()
         {
             OutputImageChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void VerifyNotDisposed()
+        {
+            if (disposed)
+            {
+                throw new ObjectDisposedException(nameof(GmicPipeServer));
+            }
         }
 
         private static bool TryGetValue(string item, string prefix, out string value)
