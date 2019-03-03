@@ -300,7 +300,6 @@ namespace GmicEffectPlugin
             int count = 0;
 
             List<string> messageParameters = new List<string>();
-            int lastIndex = bytes.Length - 1;
 
             if (bytes[bytes.Length - 1] == Separator)
             {
