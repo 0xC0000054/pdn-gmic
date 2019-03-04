@@ -478,7 +478,14 @@ namespace GmicEffectPlugin
                     int cropWidth = (int)Math.Min(layer.Width - cropX, 1 + Math.Ceiling(cropRect.Width * layer.Width));
                     int cropHeight = (int)Math.Min(layer.Height - cropY, 1 + Math.Ceiling(cropRect.Height * layer.Height));
 
-                    surface = layer.Surface.CreateWindow(cropX, cropY, cropWidth, cropHeight);
+                    try
+                    {
+                        surface = layer.Surface.CreateWindow(cropX, cropY, cropWidth, cropHeight);
+                    }
+                    catch (ArgumentOutOfRangeException ex)
+                    {
+                        throw new InvalidOperationException(string.Format("Surface.CreateWindow bounds invalid, cropRect={0}", cropRect.ToString()), ex);
+                    }
                     disposeSurface = true;
                     destinationImageStride = cropWidth * ColorBgra.SizeOf;
                 }
