@@ -45,6 +45,7 @@ namespace GmicEffectPlugin
 
         public GmicConfigDialog()
         {
+            Text = GmicEffect.StaticName;
             surface = null;
             workerThread = null;
             server = new GmicPipeServer();
