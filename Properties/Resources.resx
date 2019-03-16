@@ -123,4 +123,7 @@
   <data name="ImageTooLargeForX86" xml:space="preserve">
     <value>The image is too large for the 32-bit version of G'MIC-Qt.</value>
   </data>
+  <data name="OutputModeNotImplemented" xml:space="preserve">
+    <value>This output mode is not implemented. </value>
+  </data>
 </root>

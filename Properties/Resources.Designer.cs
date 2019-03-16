@@ -77,5 +77,14 @@ namespace GmicEffectPlugin.Properties {
                 return ResourceManager.GetString("ImageTooLargeForX86", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This output mode is not implemented. .
+        /// </summary>
+        internal static string OutputModeNotImplemented {
+            get {
+                return ResourceManager.GetString("OutputModeNotImplemented", resourceCulture);
+            }
+        }
     }
 }

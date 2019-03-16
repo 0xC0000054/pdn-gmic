@@ -235,8 +235,8 @@ namespace GmicEffectPlugin
 
                 List<string> outputLayers = parameters.GetRange(2, parameters.Count - 2);
 
-                ProcessOutputImage(outputLayers, outputMode);
-                SendMessage(server, "done");
+                string reply = ProcessOutputImage(outputLayers, outputMode);
+                SendMessage(server, reply);
             }
             else if (command.Equals("gmic_qt_release_shared_memory", StringComparison.Ordinal))
             {
@@ -542,15 +542,18 @@ namespace GmicEffectPlugin
             return reply.ToString();
         }
 
-        private unsafe void ProcessOutputImage(List<string> outputLayers, OutputMode outputMode)
+        private unsafe string ProcessOutputImage(List<string> outputLayers, OutputMode outputMode)
         {
             if (outputLayers.Count != 1)
             {
                 throw new InvalidOperationException("The output layer count must be 1.");
             }
 
+            string reply = string.Empty;
+
             if (outputMode != OutputMode.InPlace)
             {
+                reply = Properties.Resources.OutputModeNotImplemented;
                 outputMode = OutputMode.InPlace;
             }
 
@@ -606,6 +609,8 @@ namespace GmicEffectPlugin
             }
 
             OnOutputImageChanged();
+
+            return reply;
         }
 
         private void OnOutputImageChanged()
