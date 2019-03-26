@@ -73,7 +73,7 @@ namespace GmicEffectPlugin
                     }
                     else if (dataObject.GetDataPresent(DataFormats.Bitmap))
                     {
-                        // Paint.NET 3.5.X does not place a "PNG" format on the clipboard.
+                        // Some applications do not place a "PNG" format on the clipboard.
                         image = (Bitmap)dataObject.GetData(typeof(Bitmap));
                     }
                 }
