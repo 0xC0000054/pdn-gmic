@@ -50,7 +50,7 @@ namespace GmicEffectPlugin
         {
             get
             {
-                return new Bitmap(typeof(GmicEffect), "wand.png");
+                return new Bitmap(typeof(GmicEffect), PluginIconUtil.GetIconResourceNameForDpi(UIScaleFactor.Current.Dpi));
             }
         }
 
