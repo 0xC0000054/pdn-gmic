@@ -554,7 +554,6 @@ namespace GmicEffectPlugin
             if (outputMode != OutputMode.InPlace)
             {
                 reply = Properties.Resources.OutputModeNotImplemented;
-                outputMode = OutputMode.InPlace;
             }
 
             if (!TryGetValue(outputLayers[0], "layer=", out string packedLayerArgs))
