@@ -143,15 +143,15 @@ namespace GmicEffectPlugin
 
             long srcImageDataSize = (long)width * height * 4;
 
-            const int ExtraDataLength = 12;
-
-            // Some applications (e.g. Chrome) include some extra data before the start of the image data that must be skipped,
-            // others (e.g. Firefox) do not include any extra data before the start of the image data.
-            if (stream.Length == (header.bV5Size + ExtraDataLength + srcImageDataSize))
+            if (header.bV5Compression == NativeConstants.BI_BITFIELDS)
             {
-                stream.Position += ExtraDataLength;
+                // 32-bit DIBs that use BI_BITFIELDS compression include a color table with 3 entries for the RGB masks.
+                const int ColorTableLength = 3 * sizeof(uint);
+
+                stream.Position += ColorTableLength;
             }
-            else if (stream.Length < (header.bV5Size + srcImageDataSize))
+
+            if (stream.Length < (stream.Position + srcImageDataSize))
             {
                 image = null;
                 return false;
