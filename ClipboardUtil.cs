@@ -77,13 +77,18 @@ namespace GmicEffectPlugin
                             image = new Bitmap(stream);
                         }
                     }
-                    else if (!TryReadDibV5(dataObject, out image))
+                    else if (dataObject.GetDataPresent(DibV5Format.Name, false))
                     {
-                        if (dataObject.GetDataPresent(DataFormats.Bitmap))
+                        Stream stream = dataObject.GetData(DibV5Format.Name, false) as Stream;
+
+                        if (stream != null)
                         {
-                            // Some applications do not place a "PNG" format on the clipboard.
-                            image = (Bitmap)dataObject.GetData(typeof(Bitmap));
+                            image = GetBitmapFromDibV5(stream);
                         }
+                    }
+                    else if (dataObject.GetDataPresent(DataFormats.Bitmap))
+                    {
+                        image = (Bitmap)dataObject.GetData(typeof(Bitmap));
                     }
                 }
             }
@@ -95,28 +100,11 @@ namespace GmicEffectPlugin
             return image;
         }
 
-        private static bool TryReadDibV5(IDataObject dataObject, out Bitmap image)
-        {
-            if (dataObject.GetDataPresent(DibV5Format.Name, false))
-            {
-                Stream stream = dataObject.GetData(DibV5Format.Name, false) as Stream;
-
-                if (stream != null)
-                {
-                    return TryGetBitmapFromDibV5(stream, out image);
-                }
-            }
-
-            image = null;
-            return false;
-        }
-
-        private static unsafe bool TryGetBitmapFromDibV5(Stream stream, out Bitmap image)
+        private static unsafe Bitmap GetBitmapFromDibV5(Stream stream)
         {
             if (stream.Length < NativeStructs.BITMAPV5HEADER.SizeOf)
             {
-                image = null;
-                return false;
+                return null;
             }
 
             byte[] headerBytes = new byte[NativeStructs.BITMAPV5HEADER.SizeOf];
@@ -132,8 +120,7 @@ namespace GmicEffectPlugin
             if (header.bV5BitCount != 32 ||
                 (header.bV5Compression != NativeConstants.BI_BITFIELDS && header.bV5Compression != NativeConstants.BI_RGB))
             {
-                image = null;
-                return false;
+                return null;
             }
 
             int width = header.bV5Width;
@@ -153,14 +140,13 @@ namespace GmicEffectPlugin
 
             if (stream.Length < (stream.Position + srcImageDataSize))
             {
-                image = null;
-                return false;
+                return null;
             }
 
             byte[] imageDataBytes = new byte[srcImageDataSize];
             stream.ProperRead(imageDataBytes, 0, imageDataBytes.Length);
 
-            image = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            Bitmap image = new Bitmap(width, height, PixelFormat.Format32bppArgb);
 
             fixed (byte* pSrcBits = imageDataBytes)
             {
@@ -197,7 +183,7 @@ namespace GmicEffectPlugin
                 }
             }
 
-            return true;
+            return image;
         }
 
         private sealed class ClipboardThreadingHelper
