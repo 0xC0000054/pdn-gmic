@@ -34,6 +34,7 @@ namespace GmicEffectPlugin
 {
     internal sealed class GmicPipeServer : IDisposable
     {
+#pragma warning disable IDE0032 // Use auto property
         private List<GmicLayer> layers;
         private List<MemoryMappedFile> memoryMappedFiles;
         private Surface output;
@@ -42,6 +43,7 @@ namespace GmicEffectPlugin
 
         private readonly string pipeName;
         private readonly string fullPipeName;
+#pragma warning restore IDE0032 // Use auto property
 
         private static readonly RectangleF WholeImageCropRect = new RectangleF(0.0f, 0.0f, 1.0f, 1.0f);
 
