@@ -34,7 +34,7 @@ using System.Windows.Forms;
 
 namespace GmicEffectPlugin
 {
-    public sealed class GmicConfigDialog : EffectConfigDialog
+    internal sealed class GmicConfigDialog : EffectConfigDialog
     {
         private Surface surface;
         private Thread workerThread;
