@@ -21,11 +21,11 @@
 
 using GmicEffectPlugin.Properties;
 using PaintDotNet;
+using PaintDotNet.Clipboard;
 using PaintDotNet.Effects;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -114,16 +114,27 @@ namespace GmicEffectPlugin
                     new GmicLayer(EffectSourceSurface, false)
                 };
 
-                using (Bitmap clipboardImage = ClipboardUtil.GetImage())
+                Surface clipboardSurface = null;
+                try
                 {
                     // Some G'MIC filters require the image to have more than one layer.
                     // Because use Paint.NET does not currently support Effect plug-ins accessing
                     // other layers in the document, allowing the user to place the second layer on
                     // the clipboard is supported as a workaround.
 
-                    if (clipboardImage != null)
+                    clipboardSurface = Services.GetService<PaintDotNet.AppModel.IClipboardService>().TryGetSurface();
+
+                    if (clipboardSurface != null)
                     {
-                        layers.Add(new GmicLayer(Surface.CopyFromBitmap(clipboardImage), true));
+                        layers.Add(new GmicLayer(clipboardSurface, true));
+                        clipboardSurface = null;
+                    }
+                }
+                finally
+                {
+                    if (clipboardSurface != null)
+                    {
+                        clipboardSurface.Dispose();
                     }
                 }
 

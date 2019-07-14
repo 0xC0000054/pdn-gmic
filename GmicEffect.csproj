@@ -57,7 +57,6 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClipboardUtil.cs" />
     <Compile Include="GmicConfigDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -65,8 +64,6 @@
     <Compile Include="GmicEffect.cs" />
     <Compile Include="GmicLayer.cs" />
     <Compile Include="GmicPipeServer.cs" />
-    <Compile Include="Interop\NativeConstants.cs" />
-    <Compile Include="Interop\NativeStructs.cs" />
     <Compile Include="PluginIconUtil.cs" />
     <Compile Include="PluginSupportInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
