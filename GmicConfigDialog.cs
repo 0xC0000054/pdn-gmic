@@ -36,6 +36,10 @@ namespace GmicEffectPlugin
 {
     internal sealed class GmicConfigDialog : EffectConfigDialog
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Code Quality",
+            "IDE0069:Disposable fields should be disposed",
+            Justification = "InitTokenFromDialog transfers ownership to the effect token.")]
         private Surface surface;
         private Thread workerThread;
         private GmicPipeServer server;
