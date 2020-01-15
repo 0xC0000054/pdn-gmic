@@ -2,7 +2,7 @@
 *  This file is part of pdn-gmic, an Effect plug-in that
 *  integrates G'MIC-Qt into Paint.NET.
 *
-*  Copyright (C) 2018, 2019 Nicholas Hayes
+*  Copyright (C) 2018, 2019, 2020 Nicholas Hayes
 *
 *  pdn-gmic is free software: you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("null54")]
 [assembly: AssemblyProduct("GmicEffect")]
-[assembly: AssemblyCopyright("Copyright © 2019 Nicholas Hayes (aka null54), Sébastien Fourey and David Tschumperlé")]
+[assembly: AssemblyCopyright("Copyright © 2020 Nicholas Hayes (aka null54), Sébastien Fourey and David Tschumperlé")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
