@@ -115,7 +115,7 @@ namespace GmicEffectPlugin
             {
                 List<GmicLayer> layers = new List<GmicLayer>
                 {
-                    new GmicLayer(EffectSourceSurface, false)
+                    new GmicLayer(EnvironmentParameters.SourceSurface, false)
                 };
 
                 Surface clipboardSurface = null;
@@ -202,7 +202,7 @@ namespace GmicEffectPlugin
             {
                 if (surface == null)
                 {
-                    surface = new Surface(EffectSourceSurface.Width, EffectSourceSurface.Height);
+                    surface = new Surface(EnvironmentParameters.SourceSurface.Width, EnvironmentParameters.SourceSurface.Height);
                 }
                 else
                 {
