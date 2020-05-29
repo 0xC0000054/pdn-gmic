@@ -553,11 +553,6 @@ namespace GmicEffectPlugin
 
             string reply = string.Empty;
 
-            if (outputMode != OutputMode.InPlace)
-            {
-                reply = Properties.Resources.OutputModeNotImplemented;
-            }
-
             if (!TryGetValue(outputLayers[0], "layer=", out string packedLayerArgs))
             {
                 throw new InvalidOperationException("Expected a layer message argument.");
