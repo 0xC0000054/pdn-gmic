@@ -57,6 +57,12 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Dialogs\PlatformFolderBrowserDialog.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Dialogs\VistaFolderBrowserDialog.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="GmicConfigDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -64,6 +70,13 @@
     <Compile Include="GmicEffect.cs" />
     <Compile Include="GmicLayer.cs" />
     <Compile Include="GmicPipeServer.cs" />
+    <Compile Include="Interop\NativeConstants.cs" />
+    <Compile Include="Interop\NativeEnums.cs" />
+    <Compile Include="Interop\NativeInterfaces.cs" />
+    <Compile Include="Interop\NativeStructs.cs" />
+    <Compile Include="Interop\SafeNativeMethods.cs" />
+    <Compile Include="OutputImageChangedEventArgs.cs" />
+    <Compile Include="OutputImageUtil.cs" />
     <Compile Include="PluginIconUtil.cs" />
     <Compile Include="PluginSupportInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

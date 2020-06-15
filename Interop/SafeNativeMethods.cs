@@ -19,40 +19,20 @@
 *
 */
 
-using PaintDotNet;
-using PaintDotNet.Effects;
+using System;
+using System.Runtime.InteropServices;
 
-namespace GmicEffectPlugin
+namespace GmicEffectPlugin.Interop
 {
-    public sealed class GmicConfigToken : EffectConfigToken
+    [System.Security.SuppressUnmanagedCodeSecurity]
+    internal static class SafeNativeMethods
     {
-        public GmicConfigToken()
-        {
-            OutputFolder = null;
-            Surface = null;
-        }
-
-        public string OutputFolder
-        {
-            get;
-            set;
-        }
-
-        public Surface Surface
-        {
-            get;
-            set;
-        }
-
-        private GmicConfigToken(GmicConfigToken cloneMe)
-        {
-            OutputFolder = cloneMe.OutputFolder;
-            Surface = cloneMe.Surface;
-        }
-
-        public override object Clone()
-        {
-            return new GmicConfigToken(this);
-        }
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        internal static extern int SHCreateItemFromParsingName(
+            [MarshalAs(UnmanagedType.LPWStr)] string pszPath,
+            IntPtr pbc,
+            [In()] ref Guid riid,
+            [MarshalAs(UnmanagedType.Interface, IidParameterIndex = 2)] out NativeInterfaces.IShellItem ppv
+            );
     }
 }

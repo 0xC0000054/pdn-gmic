@@ -30,6 +30,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Windows.Forms;
 
 namespace GmicEffectPlugin
@@ -92,10 +93,67 @@ namespace GmicEffectPlugin
                         {
                             server.OutputImageChanged += (s, e) =>
                             {
-                                if (server.Output != null)
+                                if (e.Error != null)
                                 {
-                                    token.Surface = new Surface(srcArgs.Width, srcArgs.Height);
-                                    token.Surface.CopySurface(server.Output);
+                                    ShowErrorMessage(e.Error.Message);
+                                }
+                                else
+                                {
+                                    IReadOnlyList<Surface> outputImages = e.OutputImages;
+
+                                    try
+                                    {
+                                        if (outputImages.Count > 1)
+                                        {
+                                            try
+                                            {
+                                                OutputImageUtil.SaveAllToFolder(outputImages, token.OutputFolder);
+                                            }
+                                            catch (ArgumentException ex)
+                                            {
+                                                ShowErrorMessage(ex.Message);
+                                            }
+                                            catch (ExternalException ex)
+                                            {
+                                                ShowErrorMessage(ex.Message);
+                                            }
+                                            catch (IOException ex)
+                                            {
+                                                ShowErrorMessage(ex.Message);
+                                            }
+                                            catch (SecurityException ex)
+                                            {
+                                                ShowErrorMessage(ex.Message);
+                                            }
+                                            catch (UnauthorizedAccessException ex)
+                                            {
+                                                ShowErrorMessage(ex.Message);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Surface output = outputImages[0];
+
+                                            int sourceSurfaceWidth = srcArgs.Surface.Width;
+                                            int sourceSurfaceHeight = srcArgs.Surface.Height;
+
+                                            token.Surface = new Surface(sourceSurfaceWidth, sourceSurfaceHeight);
+
+                                            if (output.Width < sourceSurfaceWidth || output.Height < sourceSurfaceHeight)
+                                            {
+                                                token.Surface.Clear(ColorBgra.TransparentBlack);
+                                            }
+
+                                            token.Surface.CopySurface(output);
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        for (int i = 0; i < outputImages.Count; i++)
+                                        {
+                                            outputImages[i].Dispose();
+                                        }
+                                    }
                                 }
                             };
 

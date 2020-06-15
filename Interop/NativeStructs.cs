@@ -19,40 +19,27 @@
 *
 */
 
-using PaintDotNet;
-using PaintDotNet.Effects;
+using System;
+using System.Runtime.InteropServices;
 
-namespace GmicEffectPlugin
+namespace GmicEffectPlugin.Interop
 {
-    public sealed class GmicConfigToken : EffectConfigToken
+    internal static class NativeStructs
     {
-        public GmicConfigToken()
+        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        internal struct PROPERTYKEY
         {
-            OutputFolder = null;
-            Surface = null;
+            public Guid fmtid;
+            public uint pid;
         }
 
-        public string OutputFolder
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto, Pack = 4)]
+        internal struct COMDLG_FILTERSPEC
         {
-            get;
-            set;
-        }
-
-        public Surface Surface
-        {
-            get;
-            set;
-        }
-
-        private GmicConfigToken(GmicConfigToken cloneMe)
-        {
-            OutputFolder = cloneMe.OutputFolder;
-            Surface = cloneMe.Surface;
-        }
-
-        public override object Clone()
-        {
-            return new GmicConfigToken(this);
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string pszName;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string pszSpec;
         }
     }
 }

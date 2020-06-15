@@ -29,6 +29,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -44,6 +45,8 @@ namespace GmicEffectPlugin
         private Thread workerThread;
         private GmicPipeServer server;
         private bool haveOutputImage;
+        private string outputFolder;
+        private PlatformFolderBrowserDialog folderBrowserDialog;
 
         private readonly GmicDialogSynchronizationContext dialogSynchronizationContext;
 
@@ -51,6 +54,7 @@ namespace GmicEffectPlugin
 
         public GmicConfigDialog()
         {
+            InitializeComponent();
             Text = GmicEffect.StaticName;
             surface = null;
             workerThread = null;
@@ -58,6 +62,7 @@ namespace GmicEffectPlugin
             server = new GmicPipeServer(dialogSynchronizationContext);
             server.OutputImageChanged += UpdateOutputImage;
             haveOutputImage = false;
+            outputFolder = string.Empty;
         }
 
         protected override void Dispose(bool disposing)
@@ -85,6 +90,7 @@ namespace GmicEffectPlugin
         {
             GmicConfigToken token = (GmicConfigToken)theEffectToken;
 
+            token.OutputFolder = outputFolder;
             token.Surface = surface;
         }
 
@@ -197,31 +203,88 @@ namespace GmicEffectPlugin
             Close();
         }
 
-        private void UpdateOutputImage(object sender, EventArgs e)
+        private void UpdateOutputImage(object sender, OutputImageChangedEventArgs e)
         {
-            Surface output = server.Output;
+            haveOutputImage = false;
 
-            if (output != null)
+            if (e.Error != null)
             {
-                if (surface == null)
+                ShowErrorMessage(e.Error.Message);
+            }
+            else
+            {
+                IReadOnlyList<Surface> outputImages = e.OutputImages;
+
+                try
                 {
-                    surface = new Surface(EnvironmentParameters.SourceSurface.Width, EnvironmentParameters.SourceSurface.Height);
-                }
-                else
-                {
-                    if (output.Width < surface.Width || output.Height < surface.Height)
+                    if (outputImages.Count > 1)
                     {
-                        surface.Clear(ColorBgra.TransparentBlack);
+                        if (folderBrowserDialog.ShowDialog(this) == DialogResult.OK)
+                        {
+                            outputFolder = folderBrowserDialog.SelectedPath;
+
+                            try
+                            {
+                                OutputImageUtil.SaveAllToFolder(outputImages, outputFolder);
+
+                                surface?.Dispose();
+                                surface = null;
+                                haveOutputImage = true;
+                            }
+                            catch (ArgumentException ex)
+                            {
+                                ShowErrorMessage(ex.Message);
+                            }
+                            catch (ExternalException ex)
+                            {
+                                ShowErrorMessage(ex.Message);
+                            }
+                            catch (IOException ex)
+                            {
+                                ShowErrorMessage(ex.Message);
+                            }
+                            catch (SecurityException ex)
+                            {
+                                ShowErrorMessage(ex.Message);
+                            }
+                            catch (UnauthorizedAccessException ex)
+                            {
+                                ShowErrorMessage(ex.Message);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Surface output = outputImages[0];
+
+                        if (surface == null)
+                        {
+                            surface = new Surface(EnvironmentParameters.SourceSurface.Width, EnvironmentParameters.SourceSurface.Height);
+                        }
+                        else
+                        {
+                            if (output.Width < surface.Width || output.Height < surface.Height)
+                            {
+                                surface.Clear(ColorBgra.TransparentBlack);
+                            }
+                        }
+
+                        surface.CopySurface(output);
+                        haveOutputImage = true;
+
+                        // The DialogResult property is not set here because it would close the dialog
+                        // and there is no way to tell if the user clicked "Apply" or "Ok".
+                        // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
+                        FinishTokenUpdate();
                     }
                 }
-
-                surface.CopySurface(output);
-                haveOutputImage = true;
-
-                // The DialogResult property is not set here because it would close the dialog
-                // and there is no way to tell if the user clicked "Apply" or "Ok".
-                // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
-                FinishTokenUpdate();
+                finally
+                {
+                    for (int i = 0; i < outputImages.Count; i++)
+                    {
+                        outputImages[i].Dispose();
+                    }
+                }
             }
         }
 
@@ -236,6 +299,26 @@ namespace GmicEffectPlugin
             {
                 return MessageBox.Show(message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void InitializeComponent()
+        {
+            this.folderBrowserDialog = new GmicEffectPlugin.PlatformFolderBrowserDialog();
+            this.SuspendLayout();
+            //
+            // folderBrowserDialog
+            //
+            this.folderBrowserDialog.ClassicFolderBrowserDescription = "Select the output folder.";
+            this.folderBrowserDialog.VistaFolderBrowserTitle = "Select Output Folder";
+            //
+            // GmicConfigDialog
+            //
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            this.ClientSize = new System.Drawing.Size(282, 253);
+            this.Location = new System.Drawing.Point(0, 0);
+            this.Name = "GmicConfigDialog";
+            this.ResumeLayout(false);
+
         }
 
         private sealed class GmicDialogSynchronizationContext : SynchronizationContext

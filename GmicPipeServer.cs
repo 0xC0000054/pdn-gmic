@@ -38,7 +38,6 @@ namespace GmicEffectPlugin
 #pragma warning disable IDE0032 // Use auto property
         private List<GmicLayer> layers;
         private List<MemoryMappedFile> memoryMappedFiles;
-        private Surface output;
         private NamedPipeServerStream server;
         private bool disposed;
 
@@ -69,15 +68,12 @@ namespace GmicEffectPlugin
             outputImageCallback = new SendOrPostCallback(OutputImageChangedCallback);
             layers = new List<GmicLayer>();
             memoryMappedFiles = new List<MemoryMappedFile>();
-            output = null;
             disposed = false;
         }
 
         public string FullPipeName => fullPipeName;
 
-        public Surface Output => output;
-
-        public event EventHandler OutputImageChanged;
+        public event EventHandler<OutputImageChangedEventArgs> OutputImageChanged;
 
         private enum InputMode
         {
@@ -130,12 +126,6 @@ namespace GmicEffectPlugin
                 for (int i = 0; i < memoryMappedFiles.Count; i++)
                 {
                     memoryMappedFiles[i].Dispose();
-                }
-
-                if (output != null)
-                {
-                    output.Dispose();
-                    output = null;
                 }
 
                 if (server != null)
@@ -559,89 +549,120 @@ namespace GmicEffectPlugin
 
         private unsafe string ProcessOutputImage(List<string> outputLayers, OutputMode outputMode)
         {
-            if (outputLayers.Count != 1)
-            {
-                throw new InvalidOperationException("The output layer count must be 1.");
-            }
-
             string reply = string.Empty;
 
-            if (!TryGetValue(outputLayers[0], "layer=", out string packedLayerArgs))
+            List<Surface> outputImages = null;
+            Exception error = null;
+
+            try
             {
-                throw new InvalidOperationException("Expected a layer message argument.");
-            }
+                outputImages = new List<Surface>(outputLayers.Count);
 
-            string[] layerArgs = packedLayerArgs.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-            if (layerArgs.Length != 4)
-            {
-                throw new InvalidOperationException("A layer message argument must have 4 values.");
-            }
-
-            string sharedMemoryName = layerArgs[0];
-            int width = int.Parse(layerArgs[1], NumberStyles.Integer, CultureInfo.InvariantCulture);
-            int height = int.Parse(layerArgs[2], NumberStyles.Integer, CultureInfo.InvariantCulture);
-            int stride = int.Parse(layerArgs[3], NumberStyles.Integer, CultureInfo.InvariantCulture);
-
-            if (output == null || output.Width != width || output.Height != height)
-            {
-                output?.Dispose();
-                output = new Surface(width, height);
-            }
-
-            using (MemoryMappedFile file = MemoryMappedFile.OpenExisting(sharedMemoryName))
-            {
-                using (MemoryMappedViewAccessor accessor = file.CreateViewAccessor())
+                for (int i = 0; i < outputLayers.Count; i++)
                 {
-                    byte* sourceScan0 = null;
-                    RuntimeHelpers.PrepareConstrainedRegions();
+                    if (!TryGetValue(outputLayers[i], "layer=", out string packedLayerArgs))
+                    {
+                        throw new InvalidOperationException("Expected a layer message argument.");
+                    }
+
+                    string[] layerArgs = packedLayerArgs.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    if (layerArgs.Length != 4)
+                    {
+                        throw new InvalidOperationException("A layer message argument must have 4 values.");
+                    }
+
+                    string sharedMemoryName = layerArgs[0];
+                    int width = int.Parse(layerArgs[1], NumberStyles.Integer, CultureInfo.InvariantCulture);
+                    int height = int.Parse(layerArgs[2], NumberStyles.Integer, CultureInfo.InvariantCulture);
+                    int stride = int.Parse(layerArgs[3], NumberStyles.Integer, CultureInfo.InvariantCulture);
+
+                    Surface output = null;
+                    bool disposeOutput = true;
+
                     try
                     {
-                        accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref sourceScan0);
+                        output = new Surface(width, height);
 
-                        for (int y = 0; y < output.Height; y++)
+                        using (MemoryMappedFile file = MemoryMappedFile.OpenExisting(sharedMemoryName))
                         {
-                            byte* src = sourceScan0 + (y * stride);
-                            ColorBgra* dst = output.GetRowAddressUnchecked(y);
+                            using (MemoryMappedViewAccessor accessor = file.CreateViewAccessor())
+                            {
+                                byte* sourceScan0 = null;
+                                RuntimeHelpers.PrepareConstrainedRegions();
+                                try
+                                {
+                                    accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref sourceScan0);
 
-                            Buffer.MemoryCopy(src, dst, stride, stride);
+                                    for (int y = 0; y < output.Height; y++)
+                                    {
+                                        byte* src = sourceScan0 + (y * stride);
+                                        ColorBgra* dst = output.GetRowAddressUnchecked(y);
+
+                                        Buffer.MemoryCopy(src, dst, stride, stride);
+                                    }
+                                }
+                                finally
+                                {
+                                    if (sourceScan0 != null)
+                                    {
+                                        accessor.SafeMemoryMappedViewHandle.ReleasePointer();
+                                    }
+                                }
+                            }
                         }
+
+                        outputImages.Add(output);
+                        disposeOutput = false;
                     }
                     finally
                     {
-                        if (sourceScan0 != null)
+                        if (disposeOutput)
                         {
-                            accessor.SafeMemoryMappedViewHandle.ReleasePointer();
+                            output?.Dispose();
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                error = ex;
+            }
 
-            RaiseOutputImageChanged();
+            if (error != null)
+            {
+                RaiseOutputImageChanged(error, null);
+            }
+            else
+            {
+                RaiseOutputImageChanged(null, outputImages);
+            }
 
             return reply;
         }
 
-        private void RaiseOutputImageChanged()
+        private void RaiseOutputImageChanged(Exception error, IReadOnlyList<Surface> outputImages)
         {
+            OutputImageChangedEventArgs args = new OutputImageChangedEventArgs(error, outputImages);
+
             if (synchronizationContext != null)
             {
-                synchronizationContext.Post(outputImageCallback, null);
+                synchronizationContext.Post(outputImageCallback, args);
             }
             else
             {
-                OnOutputImageChanged();
+                OnOutputImageChanged(args);
             }
         }
 
         private void OutputImageChangedCallback(object state)
         {
-            OnOutputImageChanged();
+            OnOutputImageChanged((OutputImageChangedEventArgs)state);
         }
 
-        private void OnOutputImageChanged()
+        private void OnOutputImageChanged(OutputImageChangedEventArgs args)
         {
-            OutputImageChanged?.Invoke(this, EventArgs.Empty);
+            OutputImageChanged?.Invoke(this, args);
         }
 
         private void VerifyNotDisposed()

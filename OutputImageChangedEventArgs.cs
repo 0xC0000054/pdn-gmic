@@ -20,39 +20,21 @@
 */
 
 using PaintDotNet;
-using PaintDotNet.Effects;
+using System;
+using System.Collections.Generic;
 
 namespace GmicEffectPlugin
 {
-    public sealed class GmicConfigToken : EffectConfigToken
+    internal sealed class OutputImageChangedEventArgs : EventArgs
     {
-        public GmicConfigToken()
+        public OutputImageChangedEventArgs(Exception error, IReadOnlyList<Surface> outputImages)
         {
-            OutputFolder = null;
-            Surface = null;
+            Error = error;
+            OutputImages = outputImages;
         }
 
-        public string OutputFolder
-        {
-            get;
-            set;
-        }
+        public Exception Error { get; }
 
-        public Surface Surface
-        {
-            get;
-            set;
-        }
-
-        private GmicConfigToken(GmicConfigToken cloneMe)
-        {
-            OutputFolder = cloneMe.OutputFolder;
-            Surface = cloneMe.Surface;
-        }
-
-        public override object Clone()
-        {
-            return new GmicConfigToken(this);
-        }
+        public IReadOnlyList<Surface> OutputImages { get; }
     }
 }
