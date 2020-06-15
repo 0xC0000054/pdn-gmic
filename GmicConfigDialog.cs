@@ -45,6 +45,8 @@ namespace GmicEffectPlugin
         private GmicPipeServer server;
         private bool haveOutputImage;
 
+        private readonly GmicDialogSynchronizationContext dialogSynchronizationContext;
+
         internal static readonly string GmicPath = Path.Combine(Path.GetDirectoryName(typeof(GmicEffect).Assembly.Location), "gmic\\gmic_paintdotnet_qt.exe");
 
         public GmicConfigDialog()
@@ -52,7 +54,8 @@ namespace GmicEffectPlugin
             Text = GmicEffect.StaticName;
             surface = null;
             workerThread = null;
-            server = new GmicPipeServer();
+            dialogSynchronizationContext = new GmicDialogSynchronizationContext(this);
+            server = new GmicPipeServer(dialogSynchronizationContext);
             server.OutputImageChanged += UpdateOutputImage;
             haveOutputImage = false;
         }
@@ -218,14 +221,7 @@ namespace GmicEffectPlugin
                 // The DialogResult property is not set here because it would close the dialog
                 // and there is no way to tell if the user clicked "Apply" or "Ok".
                 // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
-                if (InvokeRequired)
-                {
-                    Invoke(new Action(FinishTokenUpdate));
-                }
-                else
-                {
-                    FinishTokenUpdate();
-                }
+                FinishTokenUpdate();
             }
         }
 
@@ -239,6 +235,26 @@ namespace GmicEffectPlugin
             else
             {
                 return MessageBox.Show(message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private sealed class GmicDialogSynchronizationContext : SynchronizationContext
+        {
+            private readonly GmicConfigDialog dialog;
+
+            public GmicDialogSynchronizationContext(GmicConfigDialog dialog)
+            {
+                this.dialog = dialog;
+            }
+
+            public override void Post(SendOrPostCallback d, object state)
+            {
+                dialog?.BeginInvoke(d, state);
+            }
+
+            public override void Send(SendOrPostCallback d, object state)
+            {
+                dialog?.Invoke(d, state);
             }
         }
     }

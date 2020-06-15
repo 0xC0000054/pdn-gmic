@@ -29,6 +29,7 @@ using System.IO.MemoryMappedFiles;
 using System.IO.Pipes;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 
 namespace GmicEffectPlugin
 {
@@ -43,6 +44,8 @@ namespace GmicEffectPlugin
 
         private readonly string pipeName;
         private readonly string fullPipeName;
+        private readonly SynchronizationContext synchronizationContext;
+        private readonly SendOrPostCallback outputImageCallback;
 #pragma warning restore IDE0032 // Use auto property
 
         private static readonly RectangleF WholeImageCropRect = new RectangleF(0.0f, 0.0f, 1.0f, 1.0f);
@@ -50,10 +53,20 @@ namespace GmicEffectPlugin
         /// <summary>
         /// Initializes a new instance of the <see cref="GmicPipeServer"/> class.
         /// </summary>
-        public GmicPipeServer()
+        public GmicPipeServer() : this(null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GmicPipeServer"/> class.
+        /// </summary>
+        /// <param name="synchronizationContext">The synchronization context.</param>
+        public GmicPipeServer(SynchronizationContext synchronizationContext)
         {
             pipeName = "PDN_GMIC" + Guid.NewGuid().ToString();
             fullPipeName = @"\\.\pipe\" + pipeName;
+            this.synchronizationContext = synchronizationContext;
+            outputImageCallback = new SendOrPostCallback(OutputImageChangedCallback);
             layers = new List<GmicLayer>();
             memoryMappedFiles = new List<MemoryMappedFile>();
             output = null;
@@ -604,9 +617,26 @@ namespace GmicEffectPlugin
                 }
             }
 
-            OnOutputImageChanged();
+            RaiseOutputImageChanged();
 
             return reply;
+        }
+
+        private void RaiseOutputImageChanged()
+        {
+            if (synchronizationContext != null)
+            {
+                synchronizationContext.Post(outputImageCallback, null);
+            }
+            else
+            {
+                OnOutputImageChanged();
+            }
+        }
+
+        private void OutputImageChangedCallback(object state)
+        {
+            OnOutputImageChanged();
         }
 
         private void OnOutputImageChanged()
