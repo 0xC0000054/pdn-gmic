@@ -68,6 +68,7 @@
     </Compile>
     <Compile Include="GmicConfigToken.cs" />
     <Compile Include="GmicEffect.cs" />
+    <Compile Include="GmicExitCode.cs" />
     <Compile Include="GmicLayer.cs" />
     <Compile Include="GmicPipeServer.cs" />
     <Compile Include="Interop\NativeConstants.cs" />

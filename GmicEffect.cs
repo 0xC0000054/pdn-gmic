@@ -206,9 +206,15 @@ namespace GmicEffectPlugin
                                 process.Start();
                                 process.WaitForExit();
 
-                                if (process.ExitCode == 3)
+                                switch (process.ExitCode)
                                 {
-                                    ShowErrorMessage(Resources.ImageTooLargeForX86);
+                                    case GmicExitCode.ImageTooLargeForX86:
+                                        ShowErrorMessage(Resources.ImageTooLargeForX86);
+                                        break;
+                                    case GmicExitCode.UserCanceled:
+                                        token.Surface?.Dispose();
+                                        token.Surface = null;
+                                        break;
                                 }
                             }
                         }
