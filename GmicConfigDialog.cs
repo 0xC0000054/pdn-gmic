@@ -269,6 +269,13 @@ namespace GmicEffectPlugin
                             }
                         }
 
+                        if (output.Width > surface.Width || output.Height > surface.Height)
+                        {
+                            // Place the full image on the clipboard if it is larger than the Paint.NET layer.
+                            // A cropped version will be copied to the canvas.
+                            Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
+                        }
+
                         surface.CopySurface(output);
                         haveOutputImage = true;
 
