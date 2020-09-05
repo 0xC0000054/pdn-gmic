@@ -547,7 +547,9 @@ namespace GmicEffectPlugin
             return reply.ToString();
         }
 
+#pragma warning disable IDE0060 // Remove unused parameter
         private unsafe string ProcessOutputImage(List<string> outputLayers, OutputMode outputMode)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             string reply = string.Empty;
 
