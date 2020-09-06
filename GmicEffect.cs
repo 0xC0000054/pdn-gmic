@@ -101,65 +101,55 @@ namespace GmicEffectPlugin
                                 {
                                     IReadOnlyList<Surface> outputImages = e.OutputImages;
 
-                                    try
+                                    if (outputImages.Count > 1)
                                     {
-                                        if (outputImages.Count > 1)
+                                        try
                                         {
-                                            try
-                                            {
-                                                OutputImageUtil.SaveAllToFolder(outputImages, token.OutputFolder);
-                                            }
-                                            catch (ArgumentException ex)
-                                            {
-                                                ShowErrorMessage(ex.Message);
-                                            }
-                                            catch (ExternalException ex)
-                                            {
-                                                ShowErrorMessage(ex.Message);
-                                            }
-                                            catch (IOException ex)
-                                            {
-                                                ShowErrorMessage(ex.Message);
-                                            }
-                                            catch (SecurityException ex)
-                                            {
-                                                ShowErrorMessage(ex.Message);
-                                            }
-                                            catch (UnauthorizedAccessException ex)
-                                            {
-                                                ShowErrorMessage(ex.Message);
-                                            }
+                                            OutputImageUtil.SaveAllToFolder(outputImages, token.OutputFolder);
                                         }
-                                        else
+                                        catch (ArgumentException ex)
                                         {
-                                            Surface output = outputImages[0];
-
-                                            int sourceSurfaceWidth = srcArgs.Surface.Width;
-                                            int sourceSurfaceHeight = srcArgs.Surface.Height;
-
-                                            token.Surface = new Surface(sourceSurfaceWidth, sourceSurfaceHeight);
-
-                                            if (output.Width < sourceSurfaceWidth || output.Height < sourceSurfaceHeight)
-                                            {
-                                                token.Surface.Clear(ColorBgra.TransparentBlack);
-                                            }
-
-                                            if (output.Width > sourceSurfaceWidth || output.Height > sourceSurfaceHeight)
-                                            {
-                                                // Place the full image on the clipboard if it is larger than the Paint.NET layer.
-                                                // A cropped version will be copied to the canvas.
-                                                Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
-                                            }
-
-                                            token.Surface.CopySurface(output);
+                                            ShowErrorMessage(ex.Message);
+                                        }
+                                        catch (ExternalException ex)
+                                        {
+                                            ShowErrorMessage(ex.Message);
+                                        }
+                                        catch (IOException ex)
+                                        {
+                                            ShowErrorMessage(ex.Message);
+                                        }
+                                        catch (SecurityException ex)
+                                        {
+                                            ShowErrorMessage(ex.Message);
+                                        }
+                                        catch (UnauthorizedAccessException ex)
+                                        {
+                                            ShowErrorMessage(ex.Message);
                                         }
                                     }
-                                    finally
+                                    else
                                     {
-                                        for (int i = 0; i < outputImages.Count; i++)
+                                        Surface output = outputImages[0];
+
+                                        int sourceSurfaceWidth = srcArgs.Surface.Width;
+                                        int sourceSurfaceHeight = srcArgs.Surface.Height;
+
+                                        token.Surface = new Surface(sourceSurfaceWidth, sourceSurfaceHeight);
+
+                                        if (output.Width < sourceSurfaceWidth || output.Height < sourceSurfaceHeight)
                                         {
-                                            outputImages[i].Dispose();
+                                            token.Surface.Clear(ColorBgra.TransparentBlack);
                                         }
+
+                                        if (output.Width > sourceSurfaceWidth || output.Height > sourceSurfaceHeight)
+                                        {
+                                            // Place the full image on the clipboard if it is larger than the Paint.NET layer.
+                                            // A cropped version will be copied to the canvas.
+                                            Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
+                                        }
+
+                                        token.Surface.CopySurface(output);
                                     }
                                 }
                             };

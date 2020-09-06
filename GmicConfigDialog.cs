@@ -222,82 +222,72 @@ namespace GmicEffectPlugin
             {
                 IReadOnlyList<Surface> outputImages = e.OutputImages;
 
-                try
+                if (outputImages.Count > 1)
                 {
-                    if (outputImages.Count > 1)
+                    if (folderBrowserDialog.ShowDialog(this) == DialogResult.OK)
                     {
-                        if (folderBrowserDialog.ShowDialog(this) == DialogResult.OK)
+                        outputFolder = folderBrowserDialog.SelectedPath;
+
+                        try
                         {
-                            outputFolder = folderBrowserDialog.SelectedPath;
+                            OutputImageUtil.SaveAllToFolder(outputImages, outputFolder);
 
-                            try
-                            {
-                                OutputImageUtil.SaveAllToFolder(outputImages, outputFolder);
-
-                                surface?.Dispose();
-                                surface = null;
-                                haveOutputImage = true;
-                            }
-                            catch (ArgumentException ex)
-                            {
-                                ShowErrorMessage(ex.Message);
-                            }
-                            catch (ExternalException ex)
-                            {
-                                ShowErrorMessage(ex.Message);
-                            }
-                            catch (IOException ex)
-                            {
-                                ShowErrorMessage(ex.Message);
-                            }
-                            catch (SecurityException ex)
-                            {
-                                ShowErrorMessage(ex.Message);
-                            }
-                            catch (UnauthorizedAccessException ex)
-                            {
-                                ShowErrorMessage(ex.Message);
-                            }
+                            surface?.Dispose();
+                            surface = null;
+                            haveOutputImage = true;
                         }
+                        catch (ArgumentException ex)
+                        {
+                            ShowErrorMessage(ex.Message);
+                        }
+                        catch (ExternalException ex)
+                        {
+                            ShowErrorMessage(ex.Message);
+                        }
+                        catch (IOException ex)
+                        {
+                            ShowErrorMessage(ex.Message);
+                        }
+                        catch (SecurityException ex)
+                        {
+                            ShowErrorMessage(ex.Message);
+                        }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            ShowErrorMessage(ex.Message);
+                        }
+                    }
+                }
+                else
+                {
+                    Surface output = outputImages[0];
+
+                    if (surface == null)
+                    {
+                        surface = new Surface(EnvironmentParameters.SourceSurface.Width, EnvironmentParameters.SourceSurface.Height);
                     }
                     else
                     {
-                        Surface output = outputImages[0];
-
-                        if (surface == null)
+                        if (output.Width < surface.Width || output.Height < surface.Height)
                         {
-                            surface = new Surface(EnvironmentParameters.SourceSurface.Width, EnvironmentParameters.SourceSurface.Height);
+                            surface.Clear(ColorBgra.TransparentBlack);
                         }
-                        else
-                        {
-                            if (output.Width < surface.Width || output.Height < surface.Height)
-                            {
-                                surface.Clear(ColorBgra.TransparentBlack);
-                            }
-                        }
-
-                        if (output.Width > surface.Width || output.Height > surface.Height)
-                        {
-                            // Place the full image on the clipboard if it is larger than the Paint.NET layer.
-                            // A cropped version will be copied to the canvas.
-                            Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
-                        }
-
-                        surface.CopySurface(output);
-                        haveOutputImage = true;
-
-                        // The DialogResult property is not set here because it would close the dialog
-                        // and there is no way to tell if the user clicked "Apply" or "Ok".
-                        // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
-                        FinishTokenUpdate();
                     }
-                }
-                finally
-                {
-                    for (int i = 0; i < outputImages.Count; i++)
+
+                    if (output.Width > surface.Width || output.Height > surface.Height)
                     {
-                        outputImages[i].Dispose();
+                        // Place the full image on the clipboard if it is larger than the Paint.NET layer.
+                        // A cropped version will be copied to the canvas.
+                        Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
                     }
+
+                    surface.CopySurface(output);
+                    haveOutputImage = true;
+
+                    // The DialogResult property is not set here because it would close the dialog
+                    // and there is no way to tell if the user clicked "Apply" or "Ok".
+                    // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
+                    FinishTokenUpdate();
                 }
             }
         }

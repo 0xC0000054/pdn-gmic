@@ -25,7 +25,7 @@ using System.Collections.Generic;
 
 namespace GmicEffectPlugin
 {
-    internal sealed class OutputImageChangedEventArgs : EventArgs
+    internal sealed class OutputImageChangedEventArgs : EventArgs, IDisposable
     {
         public OutputImageChangedEventArgs(Exception error, IReadOnlyList<Surface> outputImages)
         {
@@ -35,6 +35,20 @@ namespace GmicEffectPlugin
 
         public Exception Error { get; }
 
-        public IReadOnlyList<Surface> OutputImages { get; }
+        public IReadOnlyList<Surface> OutputImages { get; private set; }
+
+        public void Dispose()
+        {
+            if (OutputImages != null)
+            {
+                IReadOnlyList<Surface> output = OutputImages;
+                OutputImages = null;
+
+                for (int i = 0; i < output.Count; i++)
+                {
+                    output[i]?.Dispose();
+                }
+            }
+        }
     }
 }

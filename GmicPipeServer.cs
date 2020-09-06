@@ -664,7 +664,14 @@ namespace GmicEffectPlugin
 
         private void OnOutputImageChanged(OutputImageChangedEventArgs args)
         {
-            OutputImageChanged?.Invoke(this, args);
+            try
+            {
+                OutputImageChanged?.Invoke(this, args);
+            }
+            finally
+            {
+                args?.Dispose();
+            }
         }
 
         private void VerifyNotDisposed()
