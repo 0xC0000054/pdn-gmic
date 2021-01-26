@@ -91,69 +91,6 @@ namespace GmicEffectPlugin
                     {
                         using (GmicPipeServer server = new GmicPipeServer())
                         {
-                            server.OutputImageChanged += (s, e) =>
-                            {
-                                if (e.Error != null)
-                                {
-                                    ShowErrorMessage(e.Error.Message);
-                                }
-                                else
-                                {
-                                    IReadOnlyList<Surface> outputImages = e.OutputImages;
-
-                                    if (outputImages.Count > 1)
-                                    {
-                                        try
-                                        {
-                                            OutputImageUtil.SaveAllToFolder(outputImages, token.OutputFolder);
-                                        }
-                                        catch (ArgumentException ex)
-                                        {
-                                            ShowErrorMessage(ex.Message);
-                                        }
-                                        catch (ExternalException ex)
-                                        {
-                                            ShowErrorMessage(ex.Message);
-                                        }
-                                        catch (IOException ex)
-                                        {
-                                            ShowErrorMessage(ex.Message);
-                                        }
-                                        catch (SecurityException ex)
-                                        {
-                                            ShowErrorMessage(ex.Message);
-                                        }
-                                        catch (UnauthorizedAccessException ex)
-                                        {
-                                            ShowErrorMessage(ex.Message);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Surface output = outputImages[0];
-
-                                        int sourceSurfaceWidth = srcArgs.Surface.Width;
-                                        int sourceSurfaceHeight = srcArgs.Surface.Height;
-
-                                        token.Surface = new Surface(sourceSurfaceWidth, sourceSurfaceHeight);
-
-                                        if (output.Width < sourceSurfaceWidth || output.Height < sourceSurfaceHeight)
-                                        {
-                                            token.Surface.Clear(ColorBgra.TransparentBlack);
-                                        }
-
-                                        if (output.Width > sourceSurfaceWidth || output.Height > sourceSurfaceHeight)
-                                        {
-                                            // Place the full image on the clipboard if it is larger than the Paint.NET layer.
-                                            // A cropped version will be copied to the canvas.
-                                            Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
-                                        }
-
-                                        token.Surface.CopySurface(output);
-                                    }
-                                }
-                            };
-
                             List<GmicLayer> layers = new List<GmicLayer>
                             {
                                 new GmicLayer(srcArgs.Surface, false)
@@ -196,15 +133,78 @@ namespace GmicEffectPlugin
                                 process.Start();
                                 process.WaitForExit();
 
-                                switch (process.ExitCode)
+                                if (process.ExitCode == GmicExitCode.Ok)
                                 {
-                                    case GmicExitCode.ImageTooLargeForX86:
-                                        ShowErrorMessage(Resources.ImageTooLargeForX86);
-                                        break;
-                                    case GmicExitCode.UserCanceled:
-                                        token.Surface?.Dispose();
-                                        token.Surface = null;
-                                        break;
+                                    OutputImageState state = server.OutputImageState;
+
+                                    if (state.Error != null)
+                                    {
+                                        ShowErrorMessage(state.Error.Message);
+                                    }
+                                    else
+                                    {
+                                        IReadOnlyList<Surface> outputImages = state.OutputImages;
+
+                                        if (outputImages.Count > 1)
+                                        {
+                                            try
+                                            {
+                                                OutputImageUtil.SaveAllToFolder(outputImages, token.OutputFolder);
+                                            }
+                                            catch (ArgumentException ex)
+                                            {
+                                                ShowErrorMessage(ex.Message);
+                                            }
+                                            catch (ExternalException ex)
+                                            {
+                                                ShowErrorMessage(ex.Message);
+                                            }
+                                            catch (IOException ex)
+                                            {
+                                                ShowErrorMessage(ex.Message);
+                                            }
+                                            catch (SecurityException ex)
+                                            {
+                                                ShowErrorMessage(ex.Message);
+                                            }
+                                            catch (UnauthorizedAccessException ex)
+                                            {
+                                                ShowErrorMessage(ex.Message);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Surface output = outputImages[0];
+
+                                            int sourceSurfaceWidth = srcArgs.Surface.Width;
+                                            int sourceSurfaceHeight = srcArgs.Surface.Height;
+
+                                            token.Surface = new Surface(sourceSurfaceWidth, sourceSurfaceHeight);
+
+                                            if (output.Width < sourceSurfaceWidth || output.Height < sourceSurfaceHeight)
+                                            {
+                                                token.Surface.Clear(ColorBgra.TransparentBlack);
+                                            }
+
+                                            if (output.Width > sourceSurfaceWidth || output.Height > sourceSurfaceHeight)
+                                            {
+                                                // Place the full image on the clipboard if it is larger than the Paint.NET layer.
+                                                // A cropped version will be copied to the canvas.
+                                                Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
+                                            }
+
+                                            token.Surface.CopySurface(output);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    switch (process.ExitCode)
+                                    {
+                                        case GmicExitCode.ImageTooLargeForX86:
+                                            ShowErrorMessage(Resources.ImageTooLargeForX86);
+                                            break;
+                                    }
                                 }
                             }
                         }

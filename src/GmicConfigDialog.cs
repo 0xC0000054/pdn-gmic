@@ -44,7 +44,6 @@ namespace GmicEffectPlugin
         private Surface surface;
         private Thread workerThread;
         private GmicPipeServer server;
-        private bool haveOutputImage;
         private string outputFolder;
         private PlatformFolderBrowserDialog folderBrowserDialog;
 
@@ -61,7 +60,6 @@ namespace GmicEffectPlugin
             dialogSynchronizationContext = new GmicDialogSynchronizationContext(this);
             server = new GmicPipeServer(dialogSynchronizationContext);
             server.OutputImageChanged += UpdateOutputImage;
-            haveOutputImage = false;
             outputFolder = string.Empty;
         }
 
@@ -120,6 +118,8 @@ namespace GmicEffectPlugin
 
         private void GmicThread()
         {
+            DialogResult result = DialogResult.Cancel;
+
             try
             {
                 List<GmicLayer> layers = new List<GmicLayer>
@@ -164,16 +164,21 @@ namespace GmicEffectPlugin
                     process.Start();
                     process.WaitForExit();
 
-                    switch (process.ExitCode)
+                    if (process.ExitCode == GmicExitCode.Ok)
                     {
-                        case GmicExitCode.ImageTooLargeForX86:
-                            ShowErrorMessage(Resources.ImageTooLargeForX86);
-                            break;
-                        case GmicExitCode.UserCanceled:
-                            surface?.Dispose();
-                            surface = null;
-                            haveOutputImage = false;
-                            break;
+                        result = DialogResult.OK;
+                    }
+                    else
+                    {
+                        surface?.Dispose();
+                        surface = null;
+
+                        switch (process.ExitCode)
+                        {
+                            case GmicExitCode.ImageTooLargeForX86:
+                                ShowErrorMessage(Resources.ImageTooLargeForX86);
+                                break;
+                        }
                     }
                 }
             }
@@ -194,33 +199,38 @@ namespace GmicEffectPlugin
                 ShowErrorMessage(ex.Message);
             }
 
-            BeginInvoke(new Action(GmicThreadFinished));
+            BeginInvoke(new Action<DialogResult>(GmicThreadFinished), result);
         }
 
-        private void GmicThreadFinished()
+        private void GmicThreadFinished(DialogResult result)
         {
             workerThread.Join();
             workerThread = null;
 
-            DialogResult = haveOutputImage ? DialogResult.OK : DialogResult.Cancel;
-            if (DialogResult == DialogResult.OK)
+            if (result == DialogResult.OK)
             {
-                FinishTokenUpdate();
+                DialogResult = ProcessOutputImages();
+            }
+            else
+            {
+                DialogResult = DialogResult.Cancel;
             }
             Close();
         }
 
-        private void UpdateOutputImage(object sender, OutputImageChangedEventArgs e)
+        private DialogResult ProcessOutputImages()
         {
-            haveOutputImage = false;
+            DialogResult result = DialogResult.Cancel;
 
-            if (e.Error != null)
+            OutputImageState state = server.OutputImageState;
+
+            if (state.Error != null)
             {
-                ShowErrorMessage(e.Error.Message);
+                ShowErrorMessage(state.Error.Message);
             }
             else
             {
-                IReadOnlyList<Surface> outputImages = e.OutputImages;
+                IReadOnlyList<Surface> outputImages = state.OutputImages;
 
                 if (outputImages.Count > 1)
                 {
@@ -234,7 +244,7 @@ namespace GmicEffectPlugin
 
                             surface?.Dispose();
                             surface = null;
-                            haveOutputImage = true;
+                            result = DialogResult.OK;
                         }
                         catch (ArgumentException ex)
                         {
@@ -282,12 +292,46 @@ namespace GmicEffectPlugin
                     }
 
                     surface.CopySurface(output);
-                    haveOutputImage = true;
+                    result = DialogResult.OK;
+                }
 
-                    // The DialogResult property is not set here because it would close the dialog
-                    // and there is no way to tell if the user clicked "Apply" or "Ok".
-                    // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
-                    FinishTokenUpdate();
+                FinishTokenUpdate();
+            }
+
+            return result;
+        }
+
+        private void UpdateOutputImage(object sender, EventArgs e)
+        {
+            GmicPipeServer server = (GmicPipeServer)sender;
+
+            if (surface != null)
+            {
+                surface.Dispose();
+                surface = null;
+            }
+
+            OutputImageState state = server.OutputImageState;
+
+            if (state.Error == null)
+            {
+                IReadOnlyList<Surface> outputImages = state.OutputImages;
+
+                if (outputImages.Count == 1)
+                {
+                    Surface output = outputImages[0];
+
+                    if (output.Size == EnvironmentParameters.SourceSurface.Size)
+                    {
+                        surface = output.Clone();
+
+                        surface.CopySurface(output);
+
+                        // The DialogResult property is not set here because it would close the dialog
+                        // and there is no way to tell if the user clicked "Apply" or "Ok".
+                        // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
+                        FinishTokenUpdate();
+                    }
                 }
             }
         }

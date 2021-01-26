@@ -23,6 +23,7 @@ namespace GmicEffectPlugin
 {
     internal static class GmicExitCode
     {
+        internal const int Ok = 0;
         internal const int InvalidArguments = 1;
         internal const int EmptyPipeName = 2;
         internal const int ImageTooLargeForX86 = 3;

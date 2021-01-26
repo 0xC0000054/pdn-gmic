@@ -25,9 +25,9 @@ using System.Collections.Generic;
 
 namespace GmicEffectPlugin
 {
-    internal sealed class OutputImageChangedEventArgs : EventArgs, IDisposable
+    internal sealed class OutputImageState : IDisposable
     {
-        public OutputImageChangedEventArgs(Exception error, IReadOnlyList<Surface> outputImages)
+        public OutputImageState(Exception error, IReadOnlyList<Surface> outputImages)
         {
             Error = error;
             OutputImages = outputImages;

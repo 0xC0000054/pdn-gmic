@@ -76,7 +76,7 @@
     <Compile Include="Interop\NativeInterfaces.cs" />
     <Compile Include="Interop\NativeStructs.cs" />
     <Compile Include="Interop\SafeNativeMethods.cs" />
-    <Compile Include="OutputImageChangedEventArgs.cs" />
+    <Compile Include="OutputImageState.cs" />
     <Compile Include="OutputImageUtil.cs" />
     <Compile Include="PluginIconUtil.cs" />
     <Compile Include="PluginSupportInfo.cs" />

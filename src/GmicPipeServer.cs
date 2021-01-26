@@ -73,7 +73,9 @@ namespace GmicEffectPlugin
 
         public string FullPipeName => fullPipeName;
 
-        public event EventHandler<OutputImageChangedEventArgs> OutputImageChanged;
+        public OutputImageState OutputImageState { get; private set; }
+
+        public event EventHandler OutputImageChanged;
 
         private enum InputMode
         {
@@ -126,6 +128,12 @@ namespace GmicEffectPlugin
                 for (int i = 0; i < memoryMappedFiles.Count; i++)
                 {
                     memoryMappedFiles[i].Dispose();
+                }
+
+                if (OutputImageState != null)
+                {
+                    OutputImageState.Dispose();
+                    OutputImageState = null;
                 }
 
                 if (server != null)
@@ -636,47 +644,34 @@ namespace GmicEffectPlugin
                 error = ex;
             }
 
-            if (error != null)
-            {
-                RaiseOutputImageChanged(error, null);
-            }
-            else
-            {
-                RaiseOutputImageChanged(null, outputImages);
-            }
+            OutputImageState?.Dispose();
+            OutputImageState = new OutputImageState(error, outputImages);
+
+            RaiseOutputImageChanged();
 
             return reply;
         }
 
-        private void RaiseOutputImageChanged(Exception error, IReadOnlyList<Surface> outputImages)
+        private void RaiseOutputImageChanged()
         {
-            OutputImageChangedEventArgs args = new OutputImageChangedEventArgs(error, outputImages);
-
             if (synchronizationContext != null)
             {
-                synchronizationContext.Post(outputImageCallback, args);
+                synchronizationContext.Send(outputImageCallback, null);
             }
             else
             {
-                OnOutputImageChanged(args);
+                OnOutputImageChanged();
             }
         }
 
         private void OutputImageChangedCallback(object state)
         {
-            OnOutputImageChanged((OutputImageChangedEventArgs)state);
+            OnOutputImageChanged();
         }
 
-        private void OnOutputImageChanged(OutputImageChangedEventArgs args)
+        private void OnOutputImageChanged()
         {
-            try
-            {
-                OutputImageChanged?.Invoke(this, args);
-            }
-            finally
-            {
-                args?.Dispose();
-            }
+            OutputImageChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private void VerifyNotDisposed()
