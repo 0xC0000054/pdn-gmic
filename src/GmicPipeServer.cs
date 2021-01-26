@@ -625,6 +625,11 @@ namespace GmicEffectPlugin
                         }
                     }
                 }
+
+                // Set the first output layer as the active layer.
+                // This allows multiple G'MIC effects to be "layered" using the Apply button.
+                layers[0].Dispose();
+                layers[0] = new GmicLayer(outputImages[0].Clone(), true);
             }
             catch (Exception ex)
             {
