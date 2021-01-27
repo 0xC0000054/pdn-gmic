@@ -81,7 +81,9 @@ namespace GmicEffectPlugin
 
         protected override void InitDialogFromToken(EffectConfigToken effectTokenCopy)
         {
-            // Not required as the token is only used to send the finished image to Paint.NET.
+            GmicConfigToken token = (GmicConfigToken)effectTokenCopy;
+
+            outputFolder = token.OutputFolder;
         }
 
         protected override void InitTokenFromDialog()
@@ -234,6 +236,11 @@ namespace GmicEffectPlugin
 
                 if (outputImages.Count > 1)
                 {
+                    if (!string.IsNullOrWhiteSpace(outputFolder))
+                    {
+                        folderBrowserDialog.SelectedPath = outputFolder;
+                    }
+
                     if (folderBrowserDialog.ShowDialog(this) == DialogResult.OK)
                     {
                         outputFolder = folderBrowserDialog.SelectedPath;
