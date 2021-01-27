@@ -65,9 +65,11 @@ namespace GmicEffectPlugin
                 directoryInfo.Create();
             }
 
+            string currentTime = DateTime.Now.ToString("yyyyMMdd-THHmmss");
+
             for (int i = 0; i < outputImages.Count; i++)
             {
-                string imageName = string.Format(CultureInfo.InvariantCulture, "{0:0000}.png", i);
+                string imageName = string.Format(CultureInfo.InvariantCulture, "{0}-{1}.png", currentTime, i);
 
                 string path = Path.Combine(outputFolder, imageName);
 
