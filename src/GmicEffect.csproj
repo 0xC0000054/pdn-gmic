@@ -36,17 +36,17 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PaintDotNet.Base, Version=3.511.4977.23436, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="PaintDotNet.Base, Version=4.213.7521.38873, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Base.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Base.dll</HintPath>
     </Reference>
-    <Reference Include="PaintDotNet.Core, Version=3.511.4977.23444, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="PaintDotNet.Core, Version=4.213.7521.38873, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Core.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Core.dll</HintPath>
     </Reference>
-    <Reference Include="PaintDotNet.Effects, Version=3.511.4977.23447, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="PaintDotNet.Effects, Version=4.213.7521.38873, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Effects.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Effects.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
