@@ -331,14 +331,14 @@ namespace GmicEffectPlugin
                     if (output.Size == EnvironmentParameters.SourceSurface.Size)
                     {
                         surface = output.Clone();
-
-                        // The DialogResult property is not set here because it would close the dialog
-                        // and there is no way to tell if the user clicked "Apply" or "Ok".
-                        // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
-                        FinishTokenUpdate();
                     }
                 }
             }
+
+            // The DialogResult property is not set here because it would close the dialog
+            // and there is no way to tell if the user clicked "Apply" or "Ok".
+            // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
+            FinishTokenUpdate();
         }
 
         private DialogResult ShowErrorMessage(string message)
