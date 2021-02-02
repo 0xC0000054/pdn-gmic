@@ -77,5 +77,23 @@ namespace GmicEffectPlugin.Properties {
                 return ResourceManager.GetString("ImageTooLargeForX86", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PNG Images (*.png)|*.png.
+        /// </summary>
+        internal static string ResizedImageSaveDialogFilter {
+            get {
+                return ResourceManager.GetString("ResizedImageSaveDialogFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save the Resized Image.
+        /// </summary>
+        internal static string ResizedImageSaveDialogTitle {
+            get {
+                return ResourceManager.GetString("ResizedImageSaveDialogTitle", resourceCulture);
+            }
+        }
     }
 }

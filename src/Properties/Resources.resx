@@ -123,4 +123,10 @@
   <data name="ImageTooLargeForX86" xml:space="preserve">
     <value>The image is too large for the 32-bit version of G'MIC-Qt.</value>
   </data>
+  <data name="ResizedImageSaveDialogFilter" xml:space="preserve">
+    <value>PNG Images (*.png)|*.png</value>
+  </data>
+  <data name="ResizedImageSaveDialogTitle" xml:space="preserve">
+    <value>Save the Resized Image</value>
+  </data>
 </root>

@@ -21,19 +21,17 @@
 
 using System;
 using System.ComponentModel;
-using System.Security;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 
 namespace GmicEffectPlugin
 {
     /// <summary>
     /// Prompts the user to select a folder using a dialog appropriate for the current platform.
     /// </summary>
-    /// <seealso cref="Component"/>
+    /// <seealso cref="PlatformFileDialog"/>
     [DefaultProperty("SelectedPath")]
     [Description("Prompts the user to select a folder using a dialog appropriate for the current platform.")]
-    internal sealed class PlatformFolderBrowserDialog : Component
+    internal sealed class PlatformFolderBrowserDialog : PlatformFileDialog
     {
         private VistaFolderBrowserDialog vistaFolderBrowserDialog;
         private FolderBrowserDialog classicFolderBrowserDialog;
@@ -159,23 +157,7 @@ namespace GmicEffectPlugin
             set => selectedPath = value;
         }
 
-        /// <summary>
-        /// Shows the folder dialog.
-        /// </summary>
-        /// <returns>One of the <see cref="DialogResult"/> values.</returns>
-        public DialogResult ShowDialog()
-        {
-            return ShowDialog(null);
-        }
-
-        /// <summary>
-        /// Shows the folder dialog with the specified owner.
-        /// </summary>
-        /// <param name="owner">
-        /// Any object that implements <see cref="IWin32Window"/> that represents the top-level window that will own the modal dialog box.
-        /// </param>
-        /// <returns>One of the <see cref="DialogResult"/> values.</returns>
-        public DialogResult ShowDialog(IWin32Window owner)
+        protected override DialogResult RunDialog(IWin32Window owner)
         {
             DialogResult result;
 
@@ -209,29 +191,6 @@ namespace GmicEffectPlugin
             }
 
             return result;
-        }
-
-        private static bool VistaDialogSupported()
-        {
-            try
-            {
-                // Check that visual styles are enabled and the OS is not in safe mode.
-                VisualStyleState state = Application.VisualStyleState;
-
-                if (state == VisualStyleState.ClientAndNonClientAreasEnabled ||
-                    state == VisualStyleState.ClientAreaEnabled)
-                {
-                    return SystemInformation.BootMode == BootMode.Normal;
-                }
-            }
-            catch (InvalidOperationException)
-            {
-            }
-            catch (SecurityException)
-            {
-            }
-
-            return false;
         }
 
         private static string GetSpecialFolderPath(Environment.SpecialFolder folder)

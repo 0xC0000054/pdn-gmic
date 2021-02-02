@@ -26,6 +26,7 @@ using PaintDotNet.Effects;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -46,6 +47,7 @@ namespace GmicEffectPlugin
         private GmicPipeServer server;
         private string outputFolder;
         private PlatformFolderBrowserDialog folderBrowserDialog;
+        private PlatformFileSaveDialog resizedImageSaveDialog;
 
         private readonly GmicDialogSynchronizationContext dialogSynchronizationContext;
 
@@ -279,27 +281,64 @@ namespace GmicEffectPlugin
                 {
                     Surface output = outputImages[0];
 
-                    if (surface == null)
+                    if (output.Size == EnvironmentParameters.SourceSurface.Size)
                     {
-                        surface = new Surface(EnvironmentParameters.SourceSurface.Width, EnvironmentParameters.SourceSurface.Height);
+                        if (surface == null)
+                        {
+                            surface = new Surface(EnvironmentParameters.SourceSurface.Width, EnvironmentParameters.SourceSurface.Height);
+                        }
+
+                        surface.CopySurface(output);
+                        result = DialogResult.OK;
                     }
                     else
                     {
-                        if (output.Width < surface.Width || output.Height < surface.Height)
+                        if (surface != null)
                         {
-                            surface.Clear(ColorBgra.TransparentBlack);
+                            surface.Dispose();
+                            surface = null;
+                        }
+
+                        // Place the full image on the clipboard when the size does not match the Paint.NET layer
+                        // and prompt the user to save it.
+                        // The resized image will not be copied to the Paint.NET canvas.
+                        Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
+
+                        resizedImageSaveDialog.FileName = DateTime.Now.ToString("yyyyMMdd-THHmmss") + ".png";
+                        if (resizedImageSaveDialog.ShowDialog(this) == DialogResult.OK)
+                        {
+                            string resizedImagePath = resizedImageSaveDialog.FileName;
+                            try
+                            {
+                                using (Bitmap bitmap = output.CreateAliasedBitmap())
+                                {
+                                    bitmap.Save(resizedImagePath, System.Drawing.Imaging.ImageFormat.Png);
+                                }
+
+                                result = DialogResult.OK;
+                            }
+                            catch (ArgumentException ex)
+                            {
+                                ShowErrorMessage(ex.Message);
+                            }
+                            catch (ExternalException ex)
+                            {
+                                ShowErrorMessage(ex.Message);
+                            }
+                            catch (IOException ex)
+                            {
+                                ShowErrorMessage(ex.Message);
+                            }
+                            catch (SecurityException ex)
+                            {
+                                ShowErrorMessage(ex.Message);
+                            }
+                            catch (UnauthorizedAccessException ex)
+                            {
+                                ShowErrorMessage(ex.Message);
+                            }
                         }
                     }
-
-                    if (output.Width > surface.Width || output.Height > surface.Height)
-                    {
-                        // Place the full image on the clipboard if it is larger than the Paint.NET layer.
-                        // A cropped version will be copied to the canvas.
-                        Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
-                    }
-
-                    surface.CopySurface(output);
-                    result = DialogResult.OK;
                 }
 
                 FinishTokenUpdate();
@@ -357,12 +396,18 @@ namespace GmicEffectPlugin
         private void InitializeComponent()
         {
             this.folderBrowserDialog = new GmicEffectPlugin.PlatformFolderBrowserDialog();
+            this.resizedImageSaveDialog = new GmicEffectPlugin.PlatformFileSaveDialog();
             this.SuspendLayout();
             //
             // folderBrowserDialog
             //
             this.folderBrowserDialog.ClassicFolderBrowserDescription = "Select the output folder.";
             this.folderBrowserDialog.VistaFolderBrowserTitle = "Select Output Folder";
+            //
+            // resizedImageSaveDialog
+            //
+            this.resizedImageSaveDialog.Filter = Resources.ResizedImageSaveDialogFilter;
+            this.resizedImageSaveDialog.Title = Resources.ResizedImageSaveDialogTitle;
             //
             // GmicConfigDialog
             //

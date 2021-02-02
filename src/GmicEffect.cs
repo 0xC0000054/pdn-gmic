@@ -179,21 +179,55 @@ namespace GmicEffectPlugin
                                             int sourceSurfaceWidth = srcArgs.Surface.Width;
                                             int sourceSurfaceHeight = srcArgs.Surface.Height;
 
-                                            token.Surface = new Surface(sourceSurfaceWidth, sourceSurfaceHeight);
-
-                                            if (output.Width < sourceSurfaceWidth || output.Height < sourceSurfaceHeight)
+                                            if (output.Width == sourceSurfaceWidth && output.Height == sourceSurfaceHeight)
                                             {
-                                                token.Surface.Clear(ColorBgra.TransparentBlack);
+                                                token.Surface = output.Clone();
                                             }
-
-                                            if (output.Width > sourceSurfaceWidth || output.Height > sourceSurfaceHeight)
+                                            else
                                             {
-                                                // Place the full image on the clipboard if it is larger than the Paint.NET layer.
-                                                // A cropped version will be copied to the canvas.
+                                                // Place the full image on the clipboard when the size does not match the Paint.NET layer
+                                                // and prompt the user to save it.
+                                                // The resized image will not be copied to the Paint.NET canvas.
                                                 Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
-                                            }
 
-                                            token.Surface.CopySurface(output);
+                                                using (PlatformFileSaveDialog resizedImageSaveDialog = new PlatformFileSaveDialog())
+                                                {
+                                                    resizedImageSaveDialog.Filter = Resources.ResizedImageSaveDialogFilter;
+                                                    resizedImageSaveDialog.Title = Resources.ResizedImageSaveDialogTitle;
+                                                    resizedImageSaveDialog.FileName = DateTime.Now.ToString("yyyyMMdd-THHmmss") + ".png";
+                                                    if (resizedImageSaveDialog.ShowDialog() == DialogResult.OK)
+                                                    {
+                                                        string resizedImagePath = resizedImageSaveDialog.FileName;
+                                                        try
+                                                        {
+                                                            using (Bitmap bitmap = output.CreateAliasedBitmap())
+                                                            {
+                                                                bitmap.Save(resizedImagePath, System.Drawing.Imaging.ImageFormat.Png);
+                                                            }
+                                                        }
+                                                        catch (ArgumentException ex)
+                                                        {
+                                                            ShowErrorMessage(ex.Message);
+                                                        }
+                                                        catch (ExternalException ex)
+                                                        {
+                                                            ShowErrorMessage(ex.Message);
+                                                        }
+                                                        catch (IOException ex)
+                                                        {
+                                                            ShowErrorMessage(ex.Message);
+                                                        }
+                                                        catch (SecurityException ex)
+                                                        {
+                                                            ShowErrorMessage(ex.Message);
+                                                        }
+                                                        catch (UnauthorizedAccessException ex)
+                                                        {
+                                                            ShowErrorMessage(ex.Message);
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
