@@ -192,10 +192,7 @@ namespace GmicEffectPlugin
                                         {
                                             Surface output = outputImages[0];
 
-                                            int sourceSurfaceWidth = srcArgs.Surface.Width;
-                                            int sourceSurfaceHeight = srcArgs.Surface.Height;
-
-                                            if (output.Width == sourceSurfaceWidth && output.Height == sourceSurfaceHeight)
+                                            if (output.Width == srcArgs.Surface.Width && output.Height == srcArgs.Surface.Height)
                                             {
                                                 token.Surface = output.Clone();
                                             }
