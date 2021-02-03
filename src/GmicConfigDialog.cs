@@ -401,8 +401,8 @@ namespace GmicEffectPlugin
             //
             // folderBrowserDialog
             //
-            this.folderBrowserDialog.ClassicFolderBrowserDescription = "Select the output folder.";
-            this.folderBrowserDialog.VistaFolderBrowserTitle = "Select Output Folder";
+            this.folderBrowserDialog.ClassicFolderBrowserDescription = Resources.ClassicFolderBrowserDescription;
+            this.folderBrowserDialog.VistaFolderBrowserTitle = Resources.VistaFolderBrowserTitle;
             //
             // resizedImageSaveDialog
             //

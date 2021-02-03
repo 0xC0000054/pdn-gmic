@@ -61,6 +61,15 @@ namespace GmicEffectPlugin.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select the output folder..
+        /// </summary>
+        internal static string ClassicFolderBrowserDescription {
+            get {
+                return ResourceManager.GetString("ClassicFolderBrowserDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to gmic_paintdotnet_qt.exe must be in the gmic subfolder of Effects..
         /// </summary>
         internal static string GmicNotFound {
@@ -93,6 +102,15 @@ namespace GmicEffectPlugin.Properties {
         internal static string ResizedImageSaveDialogTitle {
             get {
                 return ResourceManager.GetString("ResizedImageSaveDialogTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select Output Folder.
+        /// </summary>
+        internal static string VistaFolderBrowserTitle {
+            get {
+                return ResourceManager.GetString("VistaFolderBrowserTitle", resourceCulture);
             }
         }
     }

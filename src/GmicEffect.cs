@@ -147,29 +147,45 @@ namespace GmicEffectPlugin
 
                                         if (outputImages.Count > 1)
                                         {
-                                            try
+                                            using (PlatformFolderBrowserDialog folderBrowserDialog = new PlatformFolderBrowserDialog())
                                             {
-                                                OutputImageUtil.SaveAllToFolder(outputImages, token.OutputFolder);
-                                            }
-                                            catch (ArgumentException ex)
-                                            {
-                                                ShowErrorMessage(ex.Message);
-                                            }
-                                            catch (ExternalException ex)
-                                            {
-                                                ShowErrorMessage(ex.Message);
-                                            }
-                                            catch (IOException ex)
-                                            {
-                                                ShowErrorMessage(ex.Message);
-                                            }
-                                            catch (SecurityException ex)
-                                            {
-                                                ShowErrorMessage(ex.Message);
-                                            }
-                                            catch (UnauthorizedAccessException ex)
-                                            {
-                                                ShowErrorMessage(ex.Message);
+                                                folderBrowserDialog.ClassicFolderBrowserDescription = Resources.ClassicFolderBrowserDescription;
+                                                folderBrowserDialog.VistaFolderBrowserTitle = Resources.VistaFolderBrowserTitle;
+
+                                                if (!string.IsNullOrWhiteSpace(token.OutputFolder))
+                                                {
+                                                    folderBrowserDialog.SelectedPath = token.OutputFolder;
+                                                }
+
+                                                if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                                                {
+                                                    string outputFolder = folderBrowserDialog.SelectedPath;
+
+                                                    try
+                                                    {
+                                                        OutputImageUtil.SaveAllToFolder(outputImages, outputFolder);
+                                                    }
+                                                    catch (ArgumentException ex)
+                                                    {
+                                                        ShowErrorMessage(ex.Message);
+                                                    }
+                                                    catch (ExternalException ex)
+                                                    {
+                                                        ShowErrorMessage(ex.Message);
+                                                    }
+                                                    catch (IOException ex)
+                                                    {
+                                                        ShowErrorMessage(ex.Message);
+                                                    }
+                                                    catch (SecurityException ex)
+                                                    {
+                                                        ShowErrorMessage(ex.Message);
+                                                    }
+                                                    catch (UnauthorizedAccessException ex)
+                                                    {
+                                                        ShowErrorMessage(ex.Message);
+                                                    }
+                                                }
                                             }
                                         }
                                         else
