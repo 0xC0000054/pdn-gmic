@@ -61,7 +61,7 @@ namespace GmicEffectPlugin.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select the output folder..
+        ///   Looks up a localized string similar to Select a folder to place the multiple G&apos;MIC output images:.
         /// </summary>
         internal static string ClassicFolderBrowserDescription {
             get {
@@ -106,7 +106,7 @@ namespace GmicEffectPlugin.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select Output Folder.
+        ///   Looks up a localized string similar to Select a Folder to Place the Multiple G&apos;MIC Output Images.
         /// </summary>
         internal static string VistaFolderBrowserTitle {
             get {

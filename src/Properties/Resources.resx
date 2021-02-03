@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ClassicFolderBrowserDescription" xml:space="preserve">
-    <value>Select the output folder.</value>
+    <value>Select a folder to place the multiple G'MIC output images:</value>
   </data>
   <data name="GmicNotFound" xml:space="preserve">
     <value>gmic_paintdotnet_qt.exe must be in the gmic subfolder of Effects.</value>
@@ -133,6 +133,6 @@
     <value>Save the Resized Image</value>
   </data>
   <data name="VistaFolderBrowserTitle" xml:space="preserve">
-    <value>Select Output Folder</value>
+    <value>Select a Folder to Place the Multiple G'MIC Output Images</value>
   </data>
 </root>
