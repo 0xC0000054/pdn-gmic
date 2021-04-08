@@ -393,6 +393,8 @@ namespace GmicEffectPlugin
             switch (inputMode)
             {
                 case InputMode.NoInput:
+                case InputMode.AllHiddenLayers:
+                case InputMode.AllHiddenLayersDescending:
                     break;
                 case InputMode.ActiveLayer:
                 case InputMode.ActiveAndAbove:
@@ -408,9 +410,7 @@ namespace GmicEffectPlugin
                 case InputMode.AllLayers:
                 case InputMode.ActiveAndBelow:
                 case InputMode.AllVisibleLayers:
-                case InputMode.AllHiddenLayers:
                 case InputMode.AllVisibleLayersDescending:
-                case InputMode.AllHiddenLayersDescending:
                     foreach (GmicLayer layer in layers)
                     {
                         width = Math.Max(width, layer.Width);
@@ -435,8 +435,7 @@ namespace GmicEffectPlugin
 
                 return new GmicLayer[] { layers[0] };
             }
-            else if (mode == InputMode.AllHiddenLayersDescending ||
-                     mode == InputMode.AllVisibleLayersDescending)
+            else if (mode == InputMode.AllVisibleLayersDescending)
             {
                 List<GmicLayer> reversed = new List<GmicLayer>(layers.Count);
 
@@ -454,8 +453,10 @@ namespace GmicEffectPlugin
                     case InputMode.AllLayers:
                     case InputMode.ActiveAndBelow:
                     case InputMode.AllVisibleLayers:
-                    case InputMode.AllHiddenLayers:
                         return layers;
+                    case InputMode.AllHiddenLayers:
+                    case InputMode.AllHiddenLayersDescending:
+                        return Array.Empty<GmicLayer>();
                     default:
                         throw new ArgumentException("The mode was not handled: " + mode.ToString());
                 }
@@ -470,6 +471,11 @@ namespace GmicEffectPlugin
             }
 
             IReadOnlyList<GmicLayer> layers = GetRequestedLayers(inputMode);
+
+            if (layers.Count == 0)
+            {
+                return string.Empty;
+            }
 
             if (memoryMappedFiles.Capacity < layers.Count)
             {
