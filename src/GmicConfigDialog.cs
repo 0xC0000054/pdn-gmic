@@ -126,10 +126,7 @@ namespace GmicEffectPlugin
 
             try
             {
-                List<GmicLayer> layers = new List<GmicLayer>
-                {
-                    new GmicLayer(EnvironmentParameters.SourceSurface, false)
-                };
+                List<GmicLayer> layers = new List<GmicLayer>();
 
                 Surface clipboardSurface = null;
                 try
@@ -154,6 +151,8 @@ namespace GmicEffectPlugin
                         clipboardSurface.Dispose();
                     }
                 }
+
+                layers.Add(new GmicLayer(EnvironmentParameters.SourceSurface, false));
 
                 server.AddLayers(layers);
 

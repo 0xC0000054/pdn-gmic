@@ -397,18 +397,18 @@ namespace GmicEffectPlugin
                 case InputMode.AllHiddenLayersDescending:
                     break;
                 case InputMode.ActiveLayer:
-                case InputMode.ActiveAndAbove:
-                    // The first layer in the list is always the layer the user has selected in Paint.NET,
+                case InputMode.ActiveAndBelow:
+                    // The last layer in the list is always the layer the user has selected in Paint.NET,
                     // so it will be treated as the active layer.
-                    // The clipboard layer (if present) will be placed below the active layer.
-                    GmicLayer activeLayer = layers[0];
+                    // The clipboard layer (if present) will be placed above the active layer.
+                    GmicLayer activeLayer = layers[layers.Count - 1];
 
                     width = activeLayer.Width;
                     height = activeLayer.Height;
                     break;
 
                 case InputMode.AllLayers:
-                case InputMode.ActiveAndBelow:
+                case InputMode.ActiveAndAbove:
                 case InputMode.AllVisibleLayers:
                 case InputMode.AllVisibleLayersDescending:
                     foreach (GmicLayer layer in layers)
@@ -427,13 +427,13 @@ namespace GmicEffectPlugin
         private IReadOnlyList<GmicLayer> GetRequestedLayers(InputMode mode)
         {
             if (mode == InputMode.ActiveLayer ||
-                mode == InputMode.ActiveAndAbove)
+                mode == InputMode.ActiveAndBelow)
             {
-                // The first layer in the list is always the layer the user has selected in Paint.NET,
+                // The last layer in the list is always the layer the user has selected in Paint.NET,
                 // so it will be treated as the active layer.
-                // The clipboard layer (if present) will be placed below the active layer.
+                // The clipboard layer (if present) will be placed above the active layer.
 
-                return new GmicLayer[] { layers[0] };
+                return new GmicLayer[] { layers[layers.Count - 1] };
             }
             else if (mode == InputMode.AllVisibleLayersDescending)
             {
@@ -451,7 +451,7 @@ namespace GmicEffectPlugin
                 switch (mode)
                 {
                     case InputMode.AllLayers:
-                    case InputMode.ActiveAndBelow:
+                    case InputMode.ActiveAndAbove:
                     case InputMode.AllVisibleLayers:
                         return layers;
                     case InputMode.AllHiddenLayers:

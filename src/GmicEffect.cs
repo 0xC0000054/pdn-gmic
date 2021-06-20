@@ -91,10 +91,7 @@ namespace GmicEffectPlugin
                     {
                         using (GmicPipeServer server = new GmicPipeServer())
                         {
-                            List<GmicLayer> layers = new List<GmicLayer>
-                            {
-                                new GmicLayer(srcArgs.Surface, false)
-                            };
+                            List<GmicLayer> layers = new List<GmicLayer>();
 
                             Surface clipboardSurface = null;
                             try
@@ -119,6 +116,8 @@ namespace GmicEffectPlugin
                                     clipboardSurface.Dispose();
                                 }
                             }
+
+                            layers.Add(new GmicLayer(EnvironmentParameters.SourceSurface, false));
 
                             server.AddLayers(layers);
 
