@@ -107,7 +107,7 @@ namespace GmicEffectPlugin
                                 // other layers in the document, allowing the user to place the second layer on
                                 // the clipboard is supported as a workaround.
 
-                                clipboardSurface = Services.GetService<PaintDotNet.AppModel.IClipboardService>().TryGetSurface();
+                                clipboardSurface = Services.GetService<IClipboardService>().TryGetSurface();
 
                                 if (clipboardSurface != null)
                                 {
@@ -206,7 +206,7 @@ namespace GmicEffectPlugin
                                                 // Place the full image on the clipboard when the size does not match the Paint.NET layer
                                                 // and prompt the user to save it.
                                                 // The resized image will not be copied to the Paint.NET canvas.
-                                                Services.GetService<PaintDotNet.AppModel.IClipboardService>().SetImage(output);
+                                                Services.GetService<IClipboardService>().SetImage(output);
 
                                                 using (PlatformFileSaveDialog resizedImageSaveDialog = new PlatformFileSaveDialog())
                                                 {
