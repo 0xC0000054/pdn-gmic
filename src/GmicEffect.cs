@@ -21,6 +21,7 @@
 
 using GmicEffectPlugin.Properties;
 using PaintDotNet;
+using PaintDotNet.AppModel;
 using PaintDotNet.Clipboard;
 using PaintDotNet.Effects;
 using System;
@@ -68,9 +69,14 @@ namespace GmicEffectPlugin
             return new GmicConfigDialog();
         }
 
-        private static void ShowErrorMessage(string message)
+        private void ShowErrorMessage(Exception exception)
         {
-            MessageBox.Show(message, StaticName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Services.GetService<IExceptionDialogService>().ShowErrorDialog(null, exception.Message, exception);
+        }
+
+        private void ShowErrorMessage(string message)
+        {
+            Services.GetService<IExceptionDialogService>().ShowErrorDialog(null, message, string.Empty);
         }
 
         protected override void OnSetRenderInfo(EffectConfigToken parameters, RenderArgs dstArgs, RenderArgs srcArgs)
@@ -138,7 +144,7 @@ namespace GmicEffectPlugin
 
                                     if (state.Error != null)
                                     {
-                                        ShowErrorMessage(state.Error.Message);
+                                        ShowErrorMessage(state.Error);
                                     }
                                     else
                                     {
@@ -166,23 +172,23 @@ namespace GmicEffectPlugin
                                                     }
                                                     catch (ArgumentException ex)
                                                     {
-                                                        ShowErrorMessage(ex.Message);
+                                                        ShowErrorMessage(ex);
                                                     }
                                                     catch (ExternalException ex)
                                                     {
-                                                        ShowErrorMessage(ex.Message);
+                                                        ShowErrorMessage(ex);
                                                     }
                                                     catch (IOException ex)
                                                     {
-                                                        ShowErrorMessage(ex.Message);
+                                                        ShowErrorMessage(ex);
                                                     }
                                                     catch (SecurityException ex)
                                                     {
-                                                        ShowErrorMessage(ex.Message);
+                                                        ShowErrorMessage(ex);
                                                     }
                                                     catch (UnauthorizedAccessException ex)
                                                     {
-                                                        ShowErrorMessage(ex.Message);
+                                                        ShowErrorMessage(ex);
                                                     }
                                                 }
                                             }
@@ -219,23 +225,23 @@ namespace GmicEffectPlugin
                                                         }
                                                         catch (ArgumentException ex)
                                                         {
-                                                            ShowErrorMessage(ex.Message);
+                                                            ShowErrorMessage(ex);
                                                         }
                                                         catch (ExternalException ex)
                                                         {
-                                                            ShowErrorMessage(ex.Message);
+                                                            ShowErrorMessage(ex);
                                                         }
                                                         catch (IOException ex)
                                                         {
-                                                            ShowErrorMessage(ex.Message);
+                                                            ShowErrorMessage(ex);
                                                         }
                                                         catch (SecurityException ex)
                                                         {
-                                                            ShowErrorMessage(ex.Message);
+                                                            ShowErrorMessage(ex);
                                                         }
                                                         catch (UnauthorizedAccessException ex)
                                                         {
-                                                            ShowErrorMessage(ex.Message);
+                                                            ShowErrorMessage(ex);
                                                         }
                                                     }
                                                 }
@@ -257,19 +263,19 @@ namespace GmicEffectPlugin
                     }
                     catch (ArgumentException ex)
                     {
-                        ShowErrorMessage(ex.Message);
+                        ShowErrorMessage(ex);
                     }
                     catch (ExternalException ex)
                     {
-                        ShowErrorMessage(ex.Message);
+                        ShowErrorMessage(ex);
                     }
                     catch (IOException ex)
                     {
-                        ShowErrorMessage(ex.Message);
+                        ShowErrorMessage(ex);
                     }
                     catch (UnauthorizedAccessException ex)
                     {
-                        ShowErrorMessage(ex.Message);
+                        ShowErrorMessage(ex);
                     }
                 }
                 else

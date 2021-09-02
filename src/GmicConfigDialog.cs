@@ -21,6 +21,7 @@
 
 using GmicEffectPlugin.Properties;
 using PaintDotNet;
+using PaintDotNet.AppModel;
 using PaintDotNet.Clipboard;
 using PaintDotNet.Effects;
 using System;
@@ -112,11 +113,9 @@ namespace GmicEffectPlugin
             }
             else
             {
-                if (ShowErrorMessage(Resources.GmicNotFound) == DialogResult.OK)
-                {
-                    DialogResult = DialogResult.Cancel;
-                    Close();
-                }
+                ShowErrorMessage(Resources.GmicNotFound);
+                DialogResult = DialogResult.Cancel;
+                Close();
             }
         }
 
@@ -187,19 +186,19 @@ namespace GmicEffectPlugin
             }
             catch (ArgumentException ex)
             {
-                ShowErrorMessage(ex.Message);
+                ShowErrorMessage(ex);
             }
             catch (ExternalException ex)
             {
-                ShowErrorMessage(ex.Message);
+                ShowErrorMessage(ex);
             }
             catch (IOException ex)
             {
-                ShowErrorMessage(ex.Message);
+                ShowErrorMessage(ex);
             }
             catch (UnauthorizedAccessException ex)
             {
-                ShowErrorMessage(ex.Message);
+                ShowErrorMessage(ex);
             }
 
             BeginInvoke(new Action<DialogResult>(GmicThreadFinished), result);
@@ -229,7 +228,7 @@ namespace GmicEffectPlugin
 
             if (state.Error != null)
             {
-                ShowErrorMessage(state.Error.Message);
+                ShowErrorMessage(state.Error);
             }
             else
             {
@@ -256,23 +255,23 @@ namespace GmicEffectPlugin
                         }
                         catch (ArgumentException ex)
                         {
-                            ShowErrorMessage(ex.Message);
+                            ShowErrorMessage(ex);
                         }
                         catch (ExternalException ex)
                         {
-                            ShowErrorMessage(ex.Message);
+                            ShowErrorMessage(ex);
                         }
                         catch (IOException ex)
                         {
-                            ShowErrorMessage(ex.Message);
+                            ShowErrorMessage(ex);
                         }
                         catch (SecurityException ex)
                         {
-                            ShowErrorMessage(ex.Message);
+                            ShowErrorMessage(ex);
                         }
                         catch (UnauthorizedAccessException ex)
                         {
-                            ShowErrorMessage(ex.Message);
+                            ShowErrorMessage(ex);
                         }
                     }
                 }
@@ -318,23 +317,23 @@ namespace GmicEffectPlugin
                             }
                             catch (ArgumentException ex)
                             {
-                                ShowErrorMessage(ex.Message);
+                                ShowErrorMessage(ex);
                             }
                             catch (ExternalException ex)
                             {
-                                ShowErrorMessage(ex.Message);
+                                ShowErrorMessage(ex);
                             }
                             catch (IOException ex)
                             {
-                                ShowErrorMessage(ex.Message);
+                                ShowErrorMessage(ex);
                             }
                             catch (SecurityException ex)
                             {
-                                ShowErrorMessage(ex.Message);
+                                ShowErrorMessage(ex);
                             }
                             catch (UnauthorizedAccessException ex)
                             {
-                                ShowErrorMessage(ex.Message);
+                                ShowErrorMessage(ex);
                             }
                         }
                     }
@@ -379,16 +378,29 @@ namespace GmicEffectPlugin
             FinishTokenUpdate();
         }
 
-        private DialogResult ShowErrorMessage(string message)
+        private void ShowErrorMessage(Exception exception)
         {
             if (InvokeRequired)
             {
-                return (DialogResult)Invoke(new Action<string>((string error) => MessageBox.Show(error, Text, MessageBoxButtons.OK, MessageBoxIcon.Error)),
-                                            message);
+                Invoke(new Action<Exception>((Exception ex) => Services.GetService<IExceptionDialogService>().ShowErrorDialog(this, ex.Message, ex)),
+                       exception);
             }
             else
             {
-                return MessageBox.Show(message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Services.GetService<IExceptionDialogService>().ShowErrorDialog(this, exception.Message, exception);
+            }
+        }
+
+        private void ShowErrorMessage(string message)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action<string>((string error) => Services.GetService<IExceptionDialogService>().ShowErrorDialog(this, error, string.Empty)),
+                       message);
+            }
+            else
+            {
+                Services.GetService<IExceptionDialogService>().ShowErrorDialog(this, message, string.Empty);
             }
         }
 
