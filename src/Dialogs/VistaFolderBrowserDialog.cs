@@ -284,7 +284,7 @@ namespace GmicEffectPlugin
 
         private sealed class FolderBrowserDialogEvents : NativeInterfaces.IFileDialogEvents
         {
-            private VistaFolderBrowserDialog dialog;
+            private readonly VistaFolderBrowserDialog dialog;
 
             public FolderBrowserDialogEvents(VistaFolderBrowserDialog folderDialog)
             {

@@ -36,8 +36,8 @@ namespace GmicEffectPlugin
     internal sealed class GmicPipeServer : IDisposable
     {
 #pragma warning disable IDE0032 // Use auto property
-        private List<GmicLayer> layers;
-        private List<MemoryMappedFile> memoryMappedFiles;
+        private readonly List<GmicLayer> layers;
+        private readonly List<MemoryMappedFile> memoryMappedFiles;
         private NamedPipeServerStream server;
         private bool disposed;
 

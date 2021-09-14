@@ -306,7 +306,7 @@ namespace GmicEffectPlugin
 
         private sealed class FileSaveDialogEvents : NativeInterfaces.IFileDialogEvents
         {
-            private VistaFileSaveDialog dialog;
+            private readonly VistaFileSaveDialog dialog;
 
             public FileSaveDialogEvents(VistaFileSaveDialog folderDialog)
             {
