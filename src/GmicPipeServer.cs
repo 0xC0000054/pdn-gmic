@@ -27,7 +27,6 @@ using System.Drawing;
 using System.Globalization;
 using System.IO.MemoryMappedFiles;
 using System.IO.Pipes;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
@@ -519,14 +518,13 @@ namespace GmicEffectPlugin
                     using (MemoryMappedViewAccessor accessor = file.CreateViewAccessor())
                     {
                         byte* destination = null;
-                        RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
                             accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref destination);
 
                             for (int y = 0; y < surface.Height; y++)
                             {
-                                ColorBgra* src = surface.GetRowAddressUnchecked(y);
+                                ColorBgra* src = surface.GetRowPointerUnchecked(y);
                                 byte* dst = destination + (y * destinationImageStride);
 
                                 Buffer.MemoryCopy(src, dst, destinationImageStride, destinationImageStride);
@@ -605,7 +603,6 @@ namespace GmicEffectPlugin
                             using (MemoryMappedViewAccessor accessor = file.CreateViewAccessor())
                             {
                                 byte* sourceScan0 = null;
-                                RuntimeHelpers.PrepareConstrainedRegions();
                                 try
                                 {
                                     accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref sourceScan0);
@@ -613,7 +610,7 @@ namespace GmicEffectPlugin
                                     for (int y = 0; y < output.Height; y++)
                                     {
                                         byte* src = sourceScan0 + (y * stride);
-                                        ColorBgra* dst = output.GetRowAddressUnchecked(y);
+                                        ColorBgra* dst = output.GetRowPointerUnchecked(y);
 
                                         Buffer.MemoryCopy(src, dst, stride, stride);
                                     }

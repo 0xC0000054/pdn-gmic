@@ -21,6 +21,7 @@
 
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
@@ -41,6 +42,8 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("c13e00d3-7fd4-44fa-a980-eba7418fca5a")]
+
+[assembly: SupportedOSPlatform("windows")]
 
 // Version information for an assembly consists of the following four values:
 //
