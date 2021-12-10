@@ -56,7 +56,7 @@ namespace GmicEffectPlugin
             }
             else
             {
-                Thread staThread = new Thread(delegate (object state)
+                Thread staThread = new(delegate (object state)
                 {
                     result = RunDialog((IWin32Window)state);
                 });

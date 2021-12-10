@@ -95,9 +95,9 @@ namespace GmicEffectPlugin
                 {
                     try
                     {
-                        using (GmicPipeServer server = new GmicPipeServer())
+                        using (GmicPipeServer server = new())
                         {
-                            List<GmicLayer> layers = new List<GmicLayer>();
+                            List<GmicLayer> layers = new();
 
                             Surface clipboardSurface = null;
                             try
@@ -131,7 +131,7 @@ namespace GmicEffectPlugin
 
                             string arguments = string.Format(CultureInfo.InvariantCulture, ".PDN {0} reapply", server.FullPipeName);
 
-                            using (Process process = new Process())
+                            using (Process process = new())
                             {
                                 process.StartInfo = new ProcessStartInfo(GmicConfigDialog.GmicPath, arguments);
 
@@ -152,7 +152,7 @@ namespace GmicEffectPlugin
 
                                         if (outputImages.Count > 1)
                                         {
-                                            using (PlatformFolderBrowserDialog folderBrowserDialog = new PlatformFolderBrowserDialog())
+                                            using (PlatformFolderBrowserDialog folderBrowserDialog = new())
                                             {
                                                 folderBrowserDialog.ClassicFolderBrowserDescription = Resources.ClassicFolderBrowserDescription;
                                                 folderBrowserDialog.VistaFolderBrowserTitle = Resources.VistaFolderBrowserTitle;
@@ -208,7 +208,7 @@ namespace GmicEffectPlugin
                                                 // The resized image will not be copied to the Paint.NET canvas.
                                                 Services.GetService<IClipboardService>().SetImage(output);
 
-                                                using (PlatformFileSaveDialog resizedImageSaveDialog = new PlatformFileSaveDialog())
+                                                using (PlatformFileSaveDialog resizedImageSaveDialog = new())
                                                 {
                                                     resizedImageSaveDialog.Filter = Resources.ResizedImageSaveDialogFilter;
                                                     resizedImageSaveDialog.Title = Resources.ResizedImageSaveDialogTitle;

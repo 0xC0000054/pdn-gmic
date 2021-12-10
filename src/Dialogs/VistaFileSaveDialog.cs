@@ -159,7 +159,7 @@ namespace GmicEffectPlugin
 
             // Set a client GUID to allow this dialog to persist its state independently
             // of the standard SaveFileDialog when the AutoUpgradeEnabled property is true.
-            Guid folderBrowserGuid = new Guid("C5778DA9-6108-45FA-AA98-1087689B93FC");
+            Guid folderBrowserGuid = new("C5778DA9-6108-45FA-AA98-1087689B93FC");
             dialog.SetClientGuid(ref folderBrowserGuid);
 
             return dialog;
@@ -188,7 +188,7 @@ namespace GmicEffectPlugin
 
         private NativeStructs.COMDLG_FILTERSPEC[] GetFilterItems()
         {
-            List<NativeStructs.COMDLG_FILTERSPEC> filterItems = new List<NativeStructs.COMDLG_FILTERSPEC>();
+            List<NativeStructs.COMDLG_FILTERSPEC> filterItems = new();
 
             if (!string.IsNullOrWhiteSpace(filter))
             {
@@ -199,7 +199,7 @@ namespace GmicEffectPlugin
                 {
                     for (int i = 0; i < splitItems.Length; i += 2)
                     {
-                        NativeStructs.COMDLG_FILTERSPEC filterSpec = new NativeStructs.COMDLG_FILTERSPEC
+                        NativeStructs.COMDLG_FILTERSPEC filterSpec = new()
                         {
                             pszName = splitItems[i],
                             pszSpec = splitItems[i + 1]
@@ -253,7 +253,7 @@ namespace GmicEffectPlugin
 
                 OnBeforeShow(dialog);
 
-                FileSaveDialogEvents dialogEvents = new FileSaveDialogEvents(this);
+                FileSaveDialogEvents dialogEvents = new(this);
                 uint eventCookie;
                 dialog.Advise(dialogEvents, out eventCookie);
                 try

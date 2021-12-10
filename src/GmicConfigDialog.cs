@@ -125,7 +125,7 @@ namespace GmicEffectPlugin
 
             try
             {
-                List<GmicLayer> layers = new List<GmicLayer>();
+                List<GmicLayer> layers = new();
 
                 Surface clipboardSurface = null;
                 try
@@ -159,7 +159,7 @@ namespace GmicEffectPlugin
 
                 string arguments = string.Format(CultureInfo.InvariantCulture, ".PDN {0}", server.FullPipeName);
 
-                using (Process process = new Process())
+                using (Process process = new())
                 {
                     process.StartInfo = new ProcessStartInfo(GmicPath, arguments);
 

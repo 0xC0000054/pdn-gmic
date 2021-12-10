@@ -136,7 +136,7 @@ namespace GmicEffectPlugin
 
         private static bool CreateShellItemFromPath(string path, out NativeInterfaces.IShellItem item)
         {
-            Guid riid = new Guid(NativeConstants.IID_IShellItem);
+            Guid riid = new(NativeConstants.IID_IShellItem);
             if (SafeNativeMethods.SHCreateItemFromParsingName(path, IntPtr.Zero, ref riid, out item) != NativeConstants.S_OK)
             {
                 item = null;
@@ -152,7 +152,7 @@ namespace GmicEffectPlugin
 
             // Set a client GUID to allow this dialog to persist its state independently
             // of the standard OpenFileDialog when the AutoUpgradeEnabled property is true.
-            Guid folderBrowserGuid = new Guid("A6FDAC55-B3B6-43EB-A94E-BA44593686E6");
+            Guid folderBrowserGuid = new("A6FDAC55-B3B6-43EB-A94E-BA44593686E6");
             dialog.SetClientGuid(ref folderBrowserGuid);
 
             return dialog;
@@ -231,7 +231,7 @@ namespace GmicEffectPlugin
 
                 OnBeforeShow(dialog);
 
-                FolderBrowserDialogEvents dialogEvents = new FolderBrowserDialogEvents(this);
+                FolderBrowserDialogEvents dialogEvents = new(this);
                 uint eventCookie;
                 dialog.Advise(dialogEvents, out eventCookie);
                 try

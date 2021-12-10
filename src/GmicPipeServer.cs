@@ -46,7 +46,7 @@ namespace GmicEffectPlugin
         private readonly SendOrPostCallback outputImageCallback;
 #pragma warning restore IDE0032 // Use auto property
 
-        private static readonly RectangleF WholeImageCropRect = new RectangleF(0.0f, 0.0f, 1.0f, 1.0f);
+        private static readonly RectangleF WholeImageCropRect = new(0.0f, 0.0f, 1.0f, 1.0f);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GmicPipeServer"/> class.
@@ -311,7 +311,7 @@ namespace GmicEffectPlugin
             int startOffset = 0;
             int count = 0;
 
-            List<string> messageParameters = new List<string>();
+            List<string> messageParameters = new();
 
             if (bytes[bytes.Length - 1] == Separator)
             {
@@ -436,7 +436,7 @@ namespace GmicEffectPlugin
             }
             else if (mode == InputMode.AllVisibleLayersDescending)
             {
-                List<GmicLayer> reversed = new List<GmicLayer>(layers.Count);
+                List<GmicLayer> reversed = new(layers.Count);
 
                 for (int i = layers.Count - 1; i >= 0; i--)
                 {
@@ -481,7 +481,7 @@ namespace GmicEffectPlugin
                 memoryMappedFiles.Capacity = layers.Count;
             }
 
-            StringBuilder reply = new StringBuilder();
+            StringBuilder reply = new();
 
             foreach (GmicLayer layer in layers)
             {

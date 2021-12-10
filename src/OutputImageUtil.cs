@@ -58,7 +58,7 @@ namespace GmicEffectPlugin
                 ExceptionUtil.ThrowArgumentNullException(nameof(outputFolder));
             }
 
-            DirectoryInfo directoryInfo = new DirectoryInfo(outputFolder);
+            DirectoryInfo directoryInfo = new(outputFolder);
 
             if (!directoryInfo.Exists)
             {
@@ -73,7 +73,7 @@ namespace GmicEffectPlugin
 
                 string path = Path.Combine(outputFolder, imageName);
 
-                using (FileStream stream = new FileStream(path, FileMode.Create, FileAccess.Write))
+                using (FileStream stream = new(path, FileMode.Create, FileAccess.Write))
                 {
                     using (System.Drawing.Bitmap image = outputImages[i].CreateAliasedBitmap())
                     {
