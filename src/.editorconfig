@@ -36,3 +36,12 @@ dotnet_style_qualification_for_field                  = false : suggestion
 dotnet_style_qualification_for_property               = false : suggestion
 dotnet_style_qualification_for_method                 = false : suggestion
 dotnet_style_qualification_for_event                  = false : suggestion
+
+# IDE0057: Use range operator
+csharp_style_prefer_range_operator = false
+
+# IDE0066: Convert switch statement to expression
+csharp_style_prefer_switch_expression = false
+
+# IDE0056: Use index operator
+csharp_style_prefer_index_operator = false
