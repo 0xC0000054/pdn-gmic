@@ -72,6 +72,8 @@ namespace GmicEffectPlugin
 
         public string FullPipeName => fullPipeName;
 
+        public string GmicCommandName { get; private set; }
+
         public OutputImageState OutputImageState { get; private set; }
 
         public event EventHandler OutputImageChanged;
@@ -261,6 +263,12 @@ namespace GmicEffectPlugin
                     memoryMappedFiles[i].Dispose();
                 }
                 memoryMappedFiles.Clear();
+
+                SendMessage(server, "done");
+            }
+            else if (command.Equals("gmic_qt_set_gmic_command_name", StringComparison.Ordinal))
+            {
+                GmicCommandName = parameters[1];
 
                 SendMessage(server, "done");
             }

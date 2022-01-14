@@ -36,6 +36,7 @@ namespace GmicEffectPlugin
         /// </summary>
         /// <param name="outputImages">The output images.</param>
         /// <param name="outputFolder">The output folder.</param>
+        /// <param name="gmicCommandName">The G'MIC command name.</param>
         /// <exception cref="ArgumentNullException">
         /// <paramref name="outputImages"/> is null
         /// or
@@ -46,7 +47,7 @@ namespace GmicEffectPlugin
         /// <exception cref="IOException">An I/O error occurred.</exception>
         /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
         /// <exception cref="UnauthorizedAccessException">The access requested is not permitted by the operating system for the specified path.</exception>
-        public static void SaveAllToFolder(IReadOnlyList<Surface> outputImages, string outputFolder)
+        public static void SaveAllToFolder(IReadOnlyList<Surface> outputImages, string outputFolder, string gmicCommandName)
         {
             if (outputImages is null)
             {
@@ -69,7 +70,7 @@ namespace GmicEffectPlugin
 
             for (int i = 0; i < outputImages.Count; i++)
             {
-                string imageName = string.Format(CultureInfo.InvariantCulture, "{0}-{1}.png", currentTime, i);
+                string imageName = string.Format(CultureInfo.InvariantCulture, "{0}_{1}-{2}.png", gmicCommandName, currentTime, i);
 
                 string path = Path.Combine(outputFolder, imageName);
 

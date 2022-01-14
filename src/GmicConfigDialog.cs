@@ -233,6 +233,7 @@ namespace GmicEffectPlugin
             else
             {
                 IReadOnlyList<Surface> outputImages = state.OutputImages;
+                string gmicCommandName = server.GmicCommandName;
 
                 if (outputImages.Count > 1)
                 {
@@ -247,7 +248,7 @@ namespace GmicEffectPlugin
 
                         try
                         {
-                            OutputImageUtil.SaveAllToFolder(outputImages, outputFolder);
+                            OutputImageUtil.SaveAllToFolder(outputImages, outputFolder, gmicCommandName);
 
                             surface?.Dispose();
                             surface = null;
@@ -302,7 +303,7 @@ namespace GmicEffectPlugin
                         // The resized image will not be copied to the Paint.NET canvas.
                         Services.GetService<IClipboardService>().SetImage(output);
 
-                        resizedImageSaveDialog.FileName = DateTime.Now.ToString("yyyyMMdd-THHmmss") + ".png";
+                        resizedImageSaveDialog.FileName = gmicCommandName + "_" + DateTime.Now.ToString("yyyyMMdd-THHmmss") + ".png";
                         if (resizedImageSaveDialog.ShowDialog(this) == DialogResult.OK)
                         {
                             string resizedImagePath = resizedImageSaveDialog.FileName;

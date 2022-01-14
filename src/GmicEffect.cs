@@ -149,6 +149,7 @@ namespace GmicEffectPlugin
                                     else
                                     {
                                         IReadOnlyList<Surface> outputImages = state.OutputImages;
+                                        string gmicCommandName = server.GmicCommandName;
 
                                         if (outputImages.Count > 1)
                                         {
@@ -168,7 +169,7 @@ namespace GmicEffectPlugin
 
                                                     try
                                                     {
-                                                        OutputImageUtil.SaveAllToFolder(outputImages, outputFolder);
+                                                        OutputImageUtil.SaveAllToFolder(outputImages, outputFolder, gmicCommandName);
                                                     }
                                                     catch (ArgumentException ex)
                                                     {
@@ -212,7 +213,7 @@ namespace GmicEffectPlugin
                                                 {
                                                     resizedImageSaveDialog.Filter = Resources.ResizedImageSaveDialogFilter;
                                                     resizedImageSaveDialog.Title = Resources.ResizedImageSaveDialogTitle;
-                                                    resizedImageSaveDialog.FileName = DateTime.Now.ToString("yyyyMMdd-THHmmss") + ".png";
+                                                    resizedImageSaveDialog.FileName = gmicCommandName + "_" + DateTime.Now.ToString("yyyyMMdd-THHmmss") + ".png";
                                                     if (resizedImageSaveDialog.ShowDialog() == DialogResult.OK)
                                                     {
                                                         string resizedImagePath = resizedImageSaveDialog.FileName;
