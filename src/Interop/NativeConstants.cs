@@ -2,7 +2,7 @@
 *  This file is part of pdn-gmic, a Paint.NET Effect that
 *  that provides integration with G'MIC-Qt.
 *
-*  Copyright (C) 2018, 2019, 2020, 2021 Nicholas Hayes
+*  Copyright (C) 2018, 2019, 2020, 2021, 2022 Nicholas Hayes
 *
 *  pdn-gmic is free software: you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
