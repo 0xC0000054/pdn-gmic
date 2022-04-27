@@ -11,6 +11,13 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="icons\icon-120.png" />
+    <None Remove="icons\icon-144.png" />
+    <None Remove="icons\icon-192.png" />
+    <None Remove="icons\icon-384.png" />
+    <None Remove="icons\icon-96.png" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="PaintDotNet.Base, Version=4.213.7521.38873, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Base.dll</HintPath>
@@ -42,6 +49,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="icons\icon-120.png" />
+    <EmbeddedResource Include="icons\icon-144.png" />
+    <EmbeddedResource Include="icons\icon-192.png" />
+    <EmbeddedResource Include="icons\icon-384.png" />
+    <EmbeddedResource Include="icons\icon-96.png" />
     <EmbeddedResource Include="icons\wand-144.png" />
     <EmbeddedResource Include="icons\wand-192.png" />
     <EmbeddedResource Include="icons\wand-384.png" />

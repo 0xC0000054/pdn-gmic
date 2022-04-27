@@ -27,10 +27,11 @@ namespace GmicEffectPlugin
     {
         private static readonly Tuple<int, string>[] availableIcons = new Tuple<int, string>[]
         {
-            new Tuple<int, string>(96, "icons.wand-96.png"),
-            new Tuple<int, string>(144, "icons.wand-144.png"),
-            new Tuple<int, string>(192, "icons.wand-192.png"),
-            new Tuple<int, string>(384, "icons.wand-384.png")
+            new Tuple<int, string>(96, "icons.icon-96.png"),
+            new Tuple<int, string>(120, "icons.icon-120.png"),
+            new Tuple<int, string>(144, "icons.icon-144.png"),
+            new Tuple<int, string>(192, "icons.icon-192.png"),
+            new Tuple<int, string>(384, "icons.icon-384.png")
         };
 
         internal static string GetIconResourceNameForDpi(int dpi)
@@ -44,7 +45,7 @@ namespace GmicEffectPlugin
                 }
             }
 
-            return "icons.wand-384.png";
+            return "icons.icon-384.png";
         }
     }
 }
