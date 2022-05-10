@@ -54,10 +54,6 @@
     <EmbeddedResource Include="icons\icon-192.png" />
     <EmbeddedResource Include="icons\icon-384.png" />
     <EmbeddedResource Include="icons\icon-96.png" />
-    <EmbeddedResource Include="icons\wand-144.png" />
-    <EmbeddedResource Include="icons\wand-192.png" />
-    <EmbeddedResource Include="icons\wand-384.png" />
-    <EmbeddedResource Include="icons\wand-96.png" />
   </ItemGroup>
   <Target Name="PreBuild" AfterTargets="PreBuildEvent">
     <Exec Command="del &quot;D:\Program Files\Paint.NET\Effects$(TargetName).pdb&quot;" />
