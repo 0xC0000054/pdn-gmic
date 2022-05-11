@@ -336,3 +336,6 @@ ASALocalRun/
 
 # Local History for Visual Studio
 .localhistory/
+
+# Debugger launch settings
+**/launchSettings.json
