@@ -272,21 +272,6 @@ namespace GmicEffectPlugin
 
                 SendMessage(server, "done");
             }
-            else if (command.Equals("gmic_qt_get_max_layer_data_length", StringComparison.Ordinal))
-            {
-                // This command is used to prevent images larger than 4GB from being used on a 32-bit version of G'MIC.
-                // Attempting to map an image that size into memory would cause an integer overflow when casting a 64-bit
-                // integer to the unsigned 32-bit size_t type.
-                long maxDataLength = 0;
-
-                foreach (GmicLayer layer in layers)
-                {
-                    maxDataLength = Math.Max(maxDataLength, layer.Surface.Scan0.Length);
-                }
-
-                server.Write(BitConverter.GetBytes(sizeof(long)), 0, 4);
-                server.Write(BitConverter.GetBytes(maxDataLength), 0, 8);
-            }
 
             // Wait for the acknowledgment that the client is done reading.
             if (server.IsConnected)

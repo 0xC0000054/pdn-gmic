@@ -125,6 +125,12 @@ namespace GmicEffectPlugin
 
                             layers.Add(new GmicLayer(EnvironmentParameters.SourceSurface, false));
 
+                            if (GmicLayerUtil.IsTooLargeForX86(layers))
+                            {
+                                ShowErrorMessage(Resources.ImageTooLargeForX86);
+                                return;
+                            }
+
                             server.AddLayers(layers);
 
                             server.Start();
@@ -248,15 +254,6 @@ namespace GmicEffectPlugin
                                                 }
                                             }
                                         }
-                                    }
-                                }
-                                else
-                                {
-                                    switch (process.ExitCode)
-                                    {
-                                        case GmicExitCode.ImageTooLargeForX86:
-                                            ShowErrorMessage(Resources.ImageTooLargeForX86);
-                                            break;
                                     }
                                 }
                             }

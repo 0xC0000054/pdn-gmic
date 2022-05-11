@@ -26,7 +26,6 @@ namespace GmicEffectPlugin
         internal const int Ok = 0;
         internal const int InvalidArguments = 1;
         internal const int EmptyPipeName = 2;
-        internal const int ImageTooLargeForX86 = 3;
-        internal const int UserCanceled = 4;
+        internal const int UserCanceled = 3;
     }
 }
