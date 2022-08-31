@@ -2,8 +2,6 @@
 
 A [Paint.NET](https://www.getpaint.net) Effect that provides integration with [G'MIC-Qt](https://github.com/c-koi/gmic-qt).
 
-Some icons are from or based on those in the [Fugue](http://p.yusukekamiyamane.com/) icon set by Yusuke Kamiyamane.
-
 ## Installing the plugin
 
 1. Close Paint.NET.
