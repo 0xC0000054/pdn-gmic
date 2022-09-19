@@ -178,10 +178,10 @@ namespace GmicEffectPlugin
                 return;
             }
 
-            byte[] replySizeBuffer = new byte[sizeof(int)];
-            server.ProperRead(replySizeBuffer, 0, replySizeBuffer.Length);
+            Span<byte> replySizeBuffer = stackalloc byte[sizeof(int)];
+            server.ProperRead(replySizeBuffer);
 
-            int messageLength = BitConverter.ToInt32(replySizeBuffer, 0);
+            int messageLength = BitConverter.ToInt32(replySizeBuffer);
 
             byte[] messageBytes = new byte[messageLength];
 
@@ -276,13 +276,13 @@ namespace GmicEffectPlugin
             // Wait for the acknowledgment that the client is done reading.
             if (server.IsConnected)
             {
-                byte[] doneMessageBuffer = new byte[4];
+                Span<byte> doneMessageBuffer = stackalloc byte[4];
                 int bytesRead = 0;
                 int bytesToRead = doneMessageBuffer.Length;
 
                 do
                 {
-                    int n = server.Read(doneMessageBuffer, bytesRead, bytesToRead);
+                    int n = server.Read(doneMessageBuffer.Slice(bytesRead, bytesToRead));
 
                     bytesRead += n;
                     bytesToRead -= n;
