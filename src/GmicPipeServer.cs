@@ -22,6 +22,7 @@
 using PaintDotNet;
 using PaintDotNet.IO;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
@@ -181,7 +182,7 @@ namespace GmicEffectPlugin
             Span<byte> replySizeBuffer = stackalloc byte[sizeof(int)];
             server.ProperRead(replySizeBuffer);
 
-            int messageLength = BitConverter.ToInt32(replySizeBuffer);
+            int messageLength = BinaryPrimitives.ReadInt32LittleEndian(replySizeBuffer);
 
             byte[] messageBytes = new byte[messageLength];
 
