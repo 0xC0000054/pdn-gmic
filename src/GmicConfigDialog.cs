@@ -54,14 +54,14 @@ namespace GmicEffectPlugin
 
         internal static readonly string GmicPath = Path.Combine(Path.GetDirectoryName(typeof(GmicEffect).Assembly.Location), "gmic\\gmic_paintdotnet_qt.exe");
 
-        public GmicConfigDialog()
+        public GmicConfigDialog(IServiceProvider effectServices)
         {
             InitializeComponent();
             Text = GmicEffect.StaticName;
             surface = null;
             workerThread = null;
             dialogSynchronizationContext = new GmicDialogSynchronizationContext(this);
-            server = new GmicPipeServer(dialogSynchronizationContext);
+            server = new GmicPipeServer(dialogSynchronizationContext, effectServices);
             server.OutputImageChanged += UpdateOutputImage;
             outputFolder = string.Empty;
         }

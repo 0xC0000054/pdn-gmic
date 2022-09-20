@@ -20,6 +20,7 @@
 */
 
 using PaintDotNet;
+using PaintDotNet.AppModel;
 using PaintDotNet.IO;
 using System;
 using System.Buffers.Binary;
@@ -28,6 +29,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO.MemoryMappedFiles;
 using System.IO.Pipes;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 
@@ -45,6 +47,7 @@ namespace GmicEffectPlugin
         private readonly string fullPipeName;
         private readonly SynchronizationContext synchronizationContext;
         private readonly SendOrPostCallback outputImageCallback;
+        private readonly IArrayPoolService arrayPoolService;
 #pragma warning restore IDE0032 // Use auto property
 
         private static readonly RectangleF WholeImageCropRect = new(0.0f, 0.0f, 1.0f, 1.0f);
@@ -52,7 +55,8 @@ namespace GmicEffectPlugin
         /// <summary>
         /// Initializes a new instance of the <see cref="GmicPipeServer"/> class.
         /// </summary>
-        public GmicPipeServer() : this(null)
+        /// <exception cref="ArgumentNullException"><paramref name="services"/> is null.</exception>
+        public GmicPipeServer(IServiceProvider services) : this(null, services)
         {
         }
 
@@ -60,12 +64,17 @@ namespace GmicEffectPlugin
         /// Initializes a new instance of the <see cref="GmicPipeServer"/> class.
         /// </summary>
         /// <param name="synchronizationContext">The synchronization context.</param>
-        public GmicPipeServer(SynchronizationContext synchronizationContext)
+        /// <param name="services">The Paint.NET effect service provider.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="services"/> is null.</exception>
+        public GmicPipeServer(SynchronizationContext synchronizationContext, IServiceProvider services)
         {
+            ArgumentNullException.ThrowIfNull(services);
+
             pipeName = "PDN_GMIC" + Guid.NewGuid().ToString();
             fullPipeName = @"\\.\pipe\" + pipeName;
             this.synchronizationContext = synchronizationContext;
             outputImageCallback = new SendOrPostCallback(OutputImageChangedCallback);
+            arrayPoolService = services.GetService<IArrayPoolService>();
             layers = new List<GmicLayer>();
             memoryMappedFiles = new List<MemoryMappedFile>();
             disposed = false;
@@ -179,16 +188,7 @@ namespace GmicEffectPlugin
                 return;
             }
 
-            Span<byte> replySizeBuffer = stackalloc byte[sizeof(int)];
-            server.ProperRead(replySizeBuffer);
-
-            int messageLength = BinaryPrimitives.ReadInt32LittleEndian(replySizeBuffer);
-
-            byte[] messageBytes = new byte[messageLength];
-
-            server.ProperRead(messageBytes, 0, messageLength);
-
-            List<string> parameters = DecodeMessageBuffer(messageBytes);
+            List<string> parameters = GetMessageParameters();
 
             if (!TryGetValue(parameters[0], "command=", out string command))
             {
@@ -209,7 +209,7 @@ namespace GmicEffectPlugin
 #endif
                 string reply = GetMaxLayerSize(inputMode);
 
-                SendMessage(server, reply);
+                SendReplyToClient(reply);
             }
             else if (command.Equals("gmic_qt_get_cropped_images", StringComparison.Ordinal))
             {
@@ -233,7 +233,7 @@ namespace GmicEffectPlugin
 #endif
                 string reply = PrepareCroppedLayers(inputMode, cropRect);
 
-                SendMessage(server, reply);
+                SendReplyToClient(reply);
             }
             else if (command.Equals("gmic_qt_output_images", StringComparison.Ordinal))
             {
@@ -251,7 +251,7 @@ namespace GmicEffectPlugin
                 List<string> outputLayers = parameters.GetRange(2, parameters.Count - 2);
 
                 string reply = ProcessOutputImage(outputLayers, outputMode);
-                SendMessage(server, reply);
+                SendReplyToClient(reply);
             }
             else if (command.Equals("gmic_qt_release_shared_memory", StringComparison.Ordinal))
             {
@@ -265,13 +265,13 @@ namespace GmicEffectPlugin
                 }
                 memoryMappedFiles.Clear();
 
-                SendMessage(server, "done");
+                SendReplyToClient("done");
             }
             else if (command.Equals("gmic_qt_set_gmic_command_name", StringComparison.Ordinal))
             {
                 GmicCommandName = parameters[1];
 
-                SendMessage(server, "done");
+                SendReplyToClient("done");
             }
 
             // Wait for the acknowledgment that the client is done reading.
@@ -296,44 +296,6 @@ namespace GmicEffectPlugin
             server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
 
             server.BeginWaitForConnection(WaitForConnectionCallback, null);
-        }
-
-        private static List<string> DecodeMessageBuffer(byte[] bytes)
-        {
-            const byte Separator = (byte)'\n';
-
-            int startOffset = 0;
-            int count = 0;
-
-            List<string> messageParameters = new();
-
-            if (bytes[bytes.Length - 1] == Separator)
-            {
-                // A message with multiple values uses \n as the separator and terminator.
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    if (bytes[i] == Separator)
-                    {
-                        // Empty strings are skipped.
-                        if (count > 0)
-                        {
-                            messageParameters.Add(Encoding.UTF8.GetString(bytes, startOffset, count));
-                        }
-                        startOffset = i + 1;
-                        count = 0;
-                    }
-                    else
-                    {
-                        count++;
-                    }
-                }
-            }
-            else
-            {
-                messageParameters.Add(Encoding.UTF8.GetString(bytes));
-            }
-
-            return messageParameters;
         }
 
         private static InputMode ParseInputMode(string item)
@@ -415,6 +377,78 @@ namespace GmicEffectPlugin
             }
 
             return width.ToString(CultureInfo.InvariantCulture) + "," + height.ToString(CultureInfo.InvariantCulture);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)] // Disable Inlining due to the use of stackalloc.
+        [SkipLocalsInit]
+        private List<string> GetMessageParameters()
+        {
+            const int MaxStackAllocBufferSize = 128;
+
+            Span<byte> replySizeBuffer = stackalloc byte[sizeof(int)];
+            server.ProperRead(replySizeBuffer);
+
+            int messageLength = BinaryPrimitives.ReadInt32LittleEndian(replySizeBuffer);
+            IArrayPoolBuffer<byte> bufferFromPool = null;
+
+            try
+            {
+                Span<byte> buffer = stackalloc byte[MaxStackAllocBufferSize];
+
+                if (messageLength > MaxStackAllocBufferSize)
+                {
+                    bufferFromPool = arrayPoolService.Rent<byte>(messageLength);
+                    buffer = bufferFromPool.AsSpan();
+                }
+
+                Span<byte> messageBytes = buffer.Slice(0, messageLength);
+
+                server.ProperRead(messageBytes);
+
+                return DecodeMessageBuffer(messageBytes);
+            }
+            finally
+            {
+                bufferFromPool?.Dispose();
+            }
+
+            static List<string> DecodeMessageBuffer(ReadOnlySpan<byte> bytes)
+            {
+                const byte Separator = (byte)'\n';
+
+                int startOffset = 0;
+                int count = 0;
+
+                List<string> messageParameters = new();
+
+                if (bytes[bytes.Length - 1] == Separator)
+                {
+                    // A message with multiple values uses \n as the separator and terminator.
+                    for (int i = 0; i < bytes.Length; i++)
+                    {
+                        if (bytes[i] == Separator)
+                        {
+                            // Empty strings are skipped.
+                            if (count > 0)
+                            {
+                                messageParameters.Add(Encoding.UTF8.GetString(bytes.Slice(startOffset, count)));
+                            }
+                            startOffset = i + 1;
+                            count = 0;
+                        }
+                        else
+                        {
+                            count++;
+                        }
+                    }
+                }
+                else
+                {
+                    messageParameters.Add(Encoding.UTF8.GetString(bytes));
+                }
+
+                return messageParameters;
+            }
         }
 
         private IReadOnlyList<GmicLayer> GetRequestedLayers(InputMode mode)
@@ -692,24 +726,40 @@ namespace GmicEffectPlugin
             return false;
         }
 
-        private static void SendMessage(NamedPipeServerStream stream, string message)
+        [MethodImpl(MethodImplOptions.NoInlining)] // Disable Inlining due to the use of stackalloc.
+        [SkipLocalsInit]
+        private void SendReplyToClient(string message)
         {
-            if (message == null)
+            ArgumentNullException.ThrowIfNull(nameof(message));
+
+            const int MaxStackAllocBufferSize = 256;
+
+            IArrayPoolBuffer<byte> bufferFromPool = null;
+
+            try
             {
-                throw new ArgumentNullException(nameof(message));
+                int messageLength = Encoding.UTF8.GetByteCount(message);
+                int totalMessageLength = sizeof(int) + messageLength;
+
+                Span<byte> buffer = stackalloc byte[MaxStackAllocBufferSize];
+
+                if (totalMessageLength > MaxStackAllocBufferSize)
+                {
+                    bufferFromPool = arrayPoolService.Rent<byte>(totalMessageLength);
+                    buffer = bufferFromPool.AsSpan();
+                }
+
+                BinaryPrimitives.WriteInt32LittleEndian(buffer, messageLength);
+                Encoding.UTF8.GetBytes(message, buffer.Slice(sizeof(int), messageLength));
+
+                Span<byte> messageBuffer = buffer.Slice(0, totalMessageLength);
+
+                server.Write(messageBuffer);
             }
-
-            int messageLength = Encoding.UTF8.GetByteCount(message);
-
-            byte[] messageBytes = new byte[sizeof(int) + messageLength];
-
-            messageBytes[0] = (byte)(messageLength & 0xff);
-            messageBytes[1] = (byte)((messageLength >> 8) & 0xff);
-            messageBytes[2] = (byte)((messageLength >> 16) & 0xff);
-            messageBytes[3] = (byte)((messageLength >> 24) & 0xff);
-            Encoding.UTF8.GetBytes(message, 0, message.Length, messageBytes, 4);
-
-            stream.Write(messageBytes, 0, messageBytes.Length);
+            finally
+            {
+                bufferFromPool?.Dispose();
+            }
         }
     }
 }

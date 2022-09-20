@@ -66,7 +66,9 @@ namespace GmicEffectPlugin
         {
             repeatEffect = false;
 
-            return new GmicConfigDialog();
+            // The services are passed to the constructor as a parameter because the EffectConfigDialog class
+            // may not have its Services property initialized when the constructor runs.
+            return new GmicConfigDialog(Services);
         }
 
         private void ShowErrorMessage(Exception exception)
@@ -95,7 +97,7 @@ namespace GmicEffectPlugin
                 {
                     try
                     {
-                        using (GmicPipeServer server = new())
+                        using (GmicPipeServer server = new(Services))
                         {
                             List<GmicLayer> layers = new();
 
