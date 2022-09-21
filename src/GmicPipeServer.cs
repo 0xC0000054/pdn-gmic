@@ -416,29 +416,17 @@ namespace GmicEffectPlugin
             {
                 const byte Separator = (byte)'\n';
 
-                int startOffset = 0;
-                int count = 0;
-
                 List<string> messageParameters = new();
 
                 if (bytes[bytes.Length - 1] == Separator)
                 {
                     // A message with multiple values uses \n as the separator and terminator.
-                    for (int i = 0; i < bytes.Length; i++)
+                    foreach (ReadOnlySpan<byte> parameter in bytes.Split(Separator))
                     {
-                        if (bytes[i] == Separator)
+                        // Empty strings are skipped.
+                        if (parameter.Length > 0)
                         {
-                            // Empty strings are skipped.
-                            if (count > 0)
-                            {
-                                messageParameters.Add(Encoding.UTF8.GetString(bytes.Slice(startOffset, count)));
-                            }
-                            startOffset = i + 1;
-                            count = 0;
-                        }
-                        else
-                        {
-                            count++;
+                            messageParameters.Add(Encoding.UTF8.GetString(parameter));
                         }
                     }
                 }
