@@ -175,30 +175,7 @@ namespace GmicEffectPlugin
                                                 {
                                                     string outputFolder = folderBrowserDialog.SelectedPath;
 
-                                                    try
-                                                    {
-                                                        OutputImageUtil.SaveAllToFolder(outputImages, outputFolder, gmicCommandName);
-                                                    }
-                                                    catch (ArgumentException ex)
-                                                    {
-                                                        ShowErrorMessage(ex);
-                                                    }
-                                                    catch (ExternalException ex)
-                                                    {
-                                                        ShowErrorMessage(ex);
-                                                    }
-                                                    catch (IOException ex)
-                                                    {
-                                                        ShowErrorMessage(ex);
-                                                    }
-                                                    catch (SecurityException ex)
-                                                    {
-                                                        ShowErrorMessage(ex);
-                                                    }
-                                                    catch (UnauthorizedAccessException ex)
-                                                    {
-                                                        ShowErrorMessage(ex);
-                                                    }
+                                                    OutputImageUtil.SaveAllToFolder(outputImages, outputFolder, gmicCommandName);
                                                 }
                                             }
                                         }
@@ -225,32 +202,10 @@ namespace GmicEffectPlugin
                                                     if (resizedImageSaveDialog.ShowDialog() == DialogResult.OK)
                                                     {
                                                         string resizedImagePath = resizedImageSaveDialog.FileName;
-                                                        try
+
+                                                        using (Bitmap bitmap = output.CreateAliasedBitmap())
                                                         {
-                                                            using (Bitmap bitmap = output.CreateAliasedBitmap())
-                                                            {
-                                                                bitmap.Save(resizedImagePath, System.Drawing.Imaging.ImageFormat.Png);
-                                                            }
-                                                        }
-                                                        catch (ArgumentException ex)
-                                                        {
-                                                            ShowErrorMessage(ex);
-                                                        }
-                                                        catch (ExternalException ex)
-                                                        {
-                                                            ShowErrorMessage(ex);
-                                                        }
-                                                        catch (IOException ex)
-                                                        {
-                                                            ShowErrorMessage(ex);
-                                                        }
-                                                        catch (SecurityException ex)
-                                                        {
-                                                            ShowErrorMessage(ex);
-                                                        }
-                                                        catch (UnauthorizedAccessException ex)
-                                                        {
-                                                            ShowErrorMessage(ex);
+                                                            bitmap.Save(resizedImagePath, System.Drawing.Imaging.ImageFormat.Png);
                                                         }
                                                     }
                                                 }
@@ -270,6 +225,10 @@ namespace GmicEffectPlugin
                         ShowErrorMessage(ex);
                     }
                     catch (IOException ex)
+                    {
+                        ShowErrorMessage(ex);
+                    }
+                    catch (SecurityException ex)
                     {
                         ShowErrorMessage(ex);
                     }
