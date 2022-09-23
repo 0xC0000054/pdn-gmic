@@ -40,6 +40,7 @@ namespace GmicEffectPlugin
 #pragma warning disable IDE0032 // Use auto property
         private readonly List<GmicLayer> layers;
         private readonly List<MemoryMappedFile> memoryMappedFiles;
+        private int activeLayerIndex;
         private NamedPipeServerStream server;
         private bool disposed;
 
@@ -120,6 +121,10 @@ namespace GmicEffectPlugin
             VerifyNotDisposed();
 
             layers.AddRange(collection);
+            // The last layer in the list is always the layer the user has selected in Paint.NET,
+            // so it will be treated as the active layer.
+            // The clipboard layer (if present) will be placed above the active layer.
+            activeLayerIndex = layers.Count - 1;
         }
 
         /// <summary>
@@ -356,7 +361,7 @@ namespace GmicEffectPlugin
                     // The last layer in the list is always the layer the user has selected in Paint.NET,
                     // so it will be treated as the active layer.
                     // The clipboard layer (if present) will be placed above the active layer.
-                    GmicLayer activeLayer = layers[layers.Count - 1];
+                    GmicLayer activeLayer = layers[activeLayerIndex];
 
                     width = activeLayer.Width;
                     height = activeLayer.Height;
@@ -448,7 +453,7 @@ namespace GmicEffectPlugin
                 // so it will be treated as the active layer.
                 // The clipboard layer (if present) will be placed above the active layer.
 
-                return new GmicLayer[] { layers[layers.Count - 1] };
+                return new GmicLayer[] { layers[activeLayerIndex] };
             }
             else if (mode == InputMode.AllVisibleLayersDescending)
             {
@@ -655,8 +660,8 @@ namespace GmicEffectPlugin
 
                 // Set the first output layer as the active layer.
                 // This allows multiple G'MIC effects to be "layered" using the Apply button.
-                layers[0].Dispose();
-                layers[0] = new GmicLayer(outputImages[0].Clone(), true);
+                layers[activeLayerIndex].Dispose();
+                layers[activeLayerIndex] = new GmicLayer(outputImages[0].Clone(), true);
             }
             catch (Exception ex)
             {
