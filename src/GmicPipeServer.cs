@@ -98,7 +98,9 @@ namespace GmicEffectPlugin
             ActiveAndAbove,
             AllVisibleLayers,
             AllHiddenLayers,
+            [Obsolete("Removed in G'MIC-Qt version 2.8.2", true)]
             AllVisibleLayersDescending,
+            [Obsolete("Removed in G'MIC-Qt version 2.8.2", true)]
             AllHiddenLayersDescending
         }
 
@@ -307,7 +309,7 @@ namespace GmicEffectPlugin
         {
             if (Enum.TryParse(item, out InputMode temp))
             {
-                if (temp >= InputMode.NoInput && temp <= InputMode.AllHiddenLayersDescending)
+                if (temp >= InputMode.NoInput && temp <= InputMode.AllHiddenLayers)
                 {
                    return temp;
                 }
@@ -354,7 +356,6 @@ namespace GmicEffectPlugin
             {
                 case InputMode.NoInput:
                 case InputMode.AllHiddenLayers:
-                case InputMode.AllHiddenLayersDescending:
                     break;
                 case InputMode.ActiveLayer:
                 case InputMode.ActiveAndBelow:
@@ -370,7 +371,6 @@ namespace GmicEffectPlugin
                 case InputMode.AllLayers:
                 case InputMode.ActiveAndAbove:
                 case InputMode.AllVisibleLayers:
-                case InputMode.AllVisibleLayersDescending:
                     foreach (GmicLayer layer in layers)
                     {
                         width = Math.Max(width, layer.Width);
@@ -455,17 +455,6 @@ namespace GmicEffectPlugin
 
                 return new GmicLayer[] { layers[activeLayerIndex] };
             }
-            else if (mode == InputMode.AllVisibleLayersDescending)
-            {
-                List<GmicLayer> reversed = new(layers.Count);
-
-                for (int i = layers.Count - 1; i >= 0; i--)
-                {
-                    reversed.Add(layers[i]);
-                }
-
-                return reversed;
-            }
             else
             {
                 switch (mode)
@@ -475,7 +464,6 @@ namespace GmicEffectPlugin
                     case InputMode.AllVisibleLayers:
                         return layers;
                     case InputMode.AllHiddenLayers:
-                    case InputMode.AllHiddenLayersDescending:
                         return Array.Empty<GmicLayer>();
                     default:
                         throw new ArgumentException("The mode was not handled: " + mode.ToString());
