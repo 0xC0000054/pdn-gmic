@@ -24,7 +24,7 @@ using System;
 
 namespace GmicEffectPlugin
 {
-    internal sealed class GmicLayer : IDisposable
+    internal sealed class GmicLayer : Disposable
     {
         private Surface surface;
         private readonly bool ownsSurface;
@@ -51,18 +51,19 @@ namespace GmicEffectPlugin
 
         public int Height { get; }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            if (surface != null && ownsSurface)
+            if (disposing && ownsSurface)
             {
-                surface.Dispose();
-                surface = null;
+                DisposableUtil.Free(ref surface);
             }
+
+            base.Dispose(disposing);
         }
 
         private void VerifyNotDisposed()
         {
-            if (surface == null)
+            if (IsDisposed)
             {
                 throw new ObjectDisposedException(nameof(GmicLayer));
             }
