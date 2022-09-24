@@ -18,20 +18,6 @@
     <None Remove="icons\icon-96.png" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="PaintDotNet.Base, Version=4.213.7521.38873, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Base.dll</HintPath>
-    </Reference>
-    <Reference Include="PaintDotNet.Core, Version=4.213.7521.38873, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="PaintDotNet.Effects, Version=4.213.7521.38873, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Effects.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Update="Dialogs\PlatformFileDialog.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -55,11 +41,43 @@
     <EmbeddedResource Include="icons\icon-384.png" />
     <EmbeddedResource Include="icons\icon-96.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="PaintDotNet.Base">
+      <HintPath>..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\PaintDotNet.Base.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Collections">
+      <HintPath>..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\PaintDotNet.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.ComponentModel">
+      <HintPath>..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\PaintDotNet.ComponentModel.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Core">
+      <HintPath>..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\PaintDotNet.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Effects.Core">
+      <HintPath>..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\PaintDotNet.Effects.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Fundamentals">
+      <HintPath>..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\PaintDotNet.Fundamentals.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.ObjectModel">
+      <HintPath>..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\PaintDotNet.ObjectModel.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Primitives">
+      <HintPath>..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\PaintDotNet.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Windows">
+      <HintPath>..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\PaintDotNet.Windows.dll</HintPath>
+    </Reference>
+    <Reference Include="PaintDotNet.Windows.Core">
+      <HintPath>..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\PaintDotNet.Windows.Core.dll</HintPath>
+    </Reference>
+  </ItemGroup>
   <Target Name="PreBuild" AfterTargets="PreBuildEvent">
-    <Exec Command="del &quot;D:\Program Files\Paint.NET\Effects$(TargetName).pdb&quot;" />
+    <Exec Command="del &quot;..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\$(TargetName).pdb&quot;" />
   </Target>
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;D:\Program Files\Paint.NET\Effects&quot; /y" />
-    <Exec Condition="$(ConfigurationName) == Debug" Command="copy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;D:\Program Files\Paint.NET\Effects&quot; /y" />
+    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\Effects&quot; /y" />
+    <Exec Condition="$(ConfigurationName) == Debug" Command="copy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;..\..\..\..\..\..\..\src\paint.net\PaintDotNet\bin\Debug\Effects&quot; /y" />
   </Target>
 </Project>
