@@ -493,7 +493,7 @@ namespace GmicEffectPlugin
                 List<GmicLayer> requestedLayers = new();
 
                 // The layers are stored in top-to-bottom order, which is what G'MIC uses.
-                for (int i = 0; i < layers.Count; i--)
+                for (int i = 0; i < layers.Count; i++)
                 {
                     GmicLayer layer = layers[i];
 
@@ -510,7 +510,7 @@ namespace GmicEffectPlugin
                 List<GmicLayer> requestedLayers = new();
 
                 // The layers are stored in top-to-bottom order, which is what G'MIC uses.
-                for (int i = 0; i < layers.Count; i--)
+                for (int i = 0; i < layers.Count; i++)
                 {
                     GmicLayer layer = layers[i];
 
