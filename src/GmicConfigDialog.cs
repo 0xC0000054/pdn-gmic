@@ -50,7 +50,7 @@ namespace GmicEffectPlugin
         private string outputFolder;
         private PlatformFolderBrowserDialog folderBrowserDialog;
         private PlatformFileSaveDialog resizedImageSaveDialog;
-        private IImagingFactory imagingFactory;
+        private readonly IImagingFactory imagingFactory;
 
         private readonly GmicDialogSynchronizationContext dialogSynchronizationContext;
 
@@ -74,7 +74,6 @@ namespace GmicEffectPlugin
             if (disposing)
             {
                 DisposableUtil.Free(ref server);
-                DisposableUtil.Free(ref imagingFactory);
             }
 
             base.OnDispose(disposing);
