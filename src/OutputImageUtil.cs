@@ -19,7 +19,8 @@
 *
 */
 
-using PaintDotNet;
+using PaintDotNet.ComponentModel;
+using PaintDotNet.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -38,26 +39,28 @@ namespace GmicEffectPlugin
         /// <param name="outputFolder">The output folder.</param>
         /// <param name="gmicCommandName">The G'MIC command name.</param>
         /// <exception cref="ArgumentNullException">
+        /// <paramref name="imagingFactory"/> is null
+        /// or
         /// <paramref name="outputImages"/> is null
         /// or
-        /// <paramref name="outputFolder"/> is null.
+        /// <paramref name="outputFolder"/> is null
+        /// or
+        /// <paramref name="gmicCommandName"/> is null.
         /// </exception>
         /// <exception cref="ArgumentException">The file path is not valid.</exception>
         /// <exception cref="ExternalException">An error occurred when saving the image.</exception>
         /// <exception cref="IOException">An I/O error occurred.</exception>
         /// <exception cref="SecurityException">The caller does not have the required permission.</exception>
         /// <exception cref="UnauthorizedAccessException">The access requested is not permitted by the operating system for the specified path.</exception>
-        public static void SaveAllToFolder(IReadOnlyList<Surface> outputImages, string outputFolder, string gmicCommandName)
+        public static void SaveAllToFolder(IImagingFactory imagingFactory,
+                                           IReadOnlyList<IBitmap<ColorBgra32>> outputImages,
+                                           string outputFolder,
+                                           string gmicCommandName)
         {
-            if (outputImages is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(outputImages));
-            }
-
-            if (outputFolder is null)
-            {
-                ExceptionUtil.ThrowArgumentNullException(nameof(outputFolder));
-            }
+            ArgumentNullException.ThrowIfNull(imagingFactory);
+            ArgumentNullException.ThrowIfNull(outputImages);
+            ArgumentNullException.ThrowIfNull(outputFolder);
+            ArgumentNullException.ThrowIfNull(gmicCommandName);
 
             DirectoryInfo directoryInfo = new(outputFolder);
 
@@ -75,12 +78,57 @@ namespace GmicEffectPlugin
                 string path = Path.Combine(outputFolder, imageName);
 
                 using (FileStream stream = new(path, FileMode.Create, FileAccess.Write))
+                using (IBitmapEncoder encoder = imagingFactory.CreateEncoder(stream, ContainerFormats.Png))
                 {
-                    using (System.Drawing.Bitmap image = outputImages[i].CreateAliasedBitmap())
+                    using (IBitmapFrameEncode frameEncode = encoder.CreateNewFrame(out IPropertyBag2 encoderOptions))
                     {
-                        image.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+                        frameEncode.Initialize(encoderOptions);
+
+                        IBitmap<ColorBgra32> bitmap = outputImages[i];
+
+                        frameEncode.SetSize(bitmap.Size);
+                        frameEncode.WriteSource(bitmap);
+
+                        frameEncode.Commit();
                     }
+
+                    encoder.Commit();
                 }
+            }
+        }
+
+        /// <summary>
+        /// Saves the resized image to the specified path.
+        /// </summary>
+        /// <param name="imagingFactory">The imaging factory.</param>
+        /// <param name="image">The image.</param>
+        /// <param name="path">The path.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="imagingFactory"/> is null
+        /// or
+        /// <paramref name="image"/> is null
+        /// or
+        /// <paramref name="path"/> is null
+        /// </exception>
+        public static void SaveResizedImage(IImagingFactory imagingFactory, IBitmap<ColorBgra32> image, string path)
+        {
+            ArgumentNullException.ThrowIfNull(imagingFactory);
+            ArgumentNullException.ThrowIfNull(image);
+
+            using (FileStream stream = new(path, FileMode.Create, FileAccess.Write))
+            using (IBitmapEncoder encoder = imagingFactory.CreateEncoder(stream, ContainerFormats.Png))
+            {
+                using (IBitmapFrameEncode frameEncode = encoder.CreateNewFrame(out IPropertyBag2 encoderOptions))
+                {
+                    frameEncode.Initialize(encoderOptions);
+
+                    frameEncode.SetSize(image.Size);
+                    frameEncode.WriteSource(image);
+
+                    frameEncode.Commit();
+                }
+
+                encoder.Commit();
             }
         }
     }

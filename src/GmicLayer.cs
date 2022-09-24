@@ -20,42 +20,70 @@
 */
 
 using PaintDotNet;
+using PaintDotNet.Effects;
+using PaintDotNet.Imaging;
+using PaintDotNet.Rendering;
 using System;
 
 namespace GmicEffectPlugin
 {
     internal sealed class GmicLayer : Disposable
     {
-        private Surface surface;
-        private readonly bool ownsSurface;
+        private IBitmapSource<ColorBgra32> bitmapSource;
 
-        public GmicLayer(Surface surface, bool ownsSurface)
+        public GmicLayer(IEffectLayerInfo layerInfo)
         {
-            this.surface = surface ?? throw new ArgumentNullException(nameof(surface));
-            this.ownsSurface = ownsSurface;
-            Width = surface.Width;
-            Height = surface.Height;
+            ArgumentNullException.ThrowIfNull(layerInfo);
+
+            bitmapSource = layerInfo.GetBitmapBgra32();
+
+            SizeInt32 size = bitmapSource.Size;
+
+            Width = size.Width;
+            Height = size.Height;
+            Visible = layerInfo.Visible;
         }
 
-        public Surface Surface
+        public GmicLayer(IBitmap<ColorBgra32> bitmapSource, bool takeOwnership = false)
         {
-            get
+            ArgumentNullException.ThrowIfNull(bitmapSource);
+
+            if (takeOwnership)
             {
-                VerifyNotDisposed();
-
-                return surface;
+                this.bitmapSource = bitmapSource;
             }
+            else
+            {
+                this.bitmapSource = bitmapSource.CreateRefT();
+            }
+
+            SizeInt32 size = bitmapSource.Size;
+
+            Width = size.Width;
+            Height = size.Height;
+            Visible = true;
         }
+
+        public RectInt32 Bounds => new(0, 0, Width, Height);
 
         public int Width { get; }
 
         public int Height { get; }
 
+        public bool Visible { get; }
+
+        public IBitmap<ColorBgra32> ToBitmap(RectInt32 roi)
+        {
+            VerifyNotDisposed();
+
+            return bitmapSource.ToBitmap(roi);
+        }
+
         protected override void Dispose(bool disposing)
         {
-            if (disposing && ownsSurface)
+            if (disposing)
             {
-                DisposableUtil.Free(ref surface);
+                DisposableUtil.Free(ref bitmapSource);
             }
 
             base.Dispose(disposing);

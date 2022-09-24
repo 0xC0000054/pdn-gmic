@@ -24,6 +24,7 @@ using PaintDotNet;
 using PaintDotNet.AppModel;
 using PaintDotNet.Clipboard;
 using PaintDotNet.Effects;
+using PaintDotNet.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -37,74 +38,82 @@ using System.Windows.Forms;
 
 namespace GmicEffectPlugin
 {
-    internal sealed class GmicConfigDialog : EffectConfigDialog
+    internal sealed class GmicConfigDialog : EffectConfigForm
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Code Quality",
             "IDE0069:Disposable fields should be disposed",
             Justification = "InitTokenFromDialog transfers ownership to the effect token.")]
-        private Surface surface;
+        private IBitmap<ColorBgra32> outputBitmap;
         private Thread workerThread;
         private GmicPipeServer server;
         private string outputFolder;
         private PlatformFolderBrowserDialog folderBrowserDialog;
         private PlatformFileSaveDialog resizedImageSaveDialog;
+        private IImagingFactory imagingFactory;
 
         private readonly GmicDialogSynchronizationContext dialogSynchronizationContext;
 
         internal static readonly string GmicPath = Path.Combine(Path.GetDirectoryName(typeof(GmicEffect).Assembly.Location), "gmic\\gmic_paintdotnet_qt.exe");
 
-        public GmicConfigDialog(IServiceProvider effectServices)
+        public GmicConfigDialog(IServiceProvider effectServices, IBitmapEffectEnvironment effectEnvironment)
         {
             InitializeComponent();
             Text = GmicEffect.StaticName;
-            surface = null;
+            outputBitmap = null;
             workerThread = null;
             dialogSynchronizationContext = new GmicDialogSynchronizationContext(this);
-            server = new GmicPipeServer(dialogSynchronizationContext, effectServices);
+            server = new GmicPipeServer(dialogSynchronizationContext, effectServices, effectEnvironment);
             server.OutputImageChanged += UpdateOutputImage;
             outputFolder = string.Empty;
+            imagingFactory = effectServices.GetService<IImagingFactory>();
         }
 
-        protected override void Dispose(bool disposing)
+        protected override void OnDispose(bool disposing)
         {
-            if (disposing && server != null)
+            if (disposing)
             {
-                server.Dispose();
-                server = null;
+                DisposableUtil.Free(ref server);
+                DisposableUtil.Free(ref imagingFactory);
             }
 
-            base.Dispose(disposing);
+            base.OnDispose(disposing);
         }
 
-        protected override void InitialInitToken()
+        protected override EffectConfigToken OnCreateInitialToken()
         {
-            theEffectToken = new GmicConfigToken();
+            return new GmicConfigToken();
         }
 
-        protected override void InitDialogFromToken(EffectConfigToken effectTokenCopy)
+        protected override void OnUpdateDialogFromToken(EffectConfigToken token)
         {
-            GmicConfigToken token = (GmicConfigToken)effectTokenCopy;
+            GmicConfigToken gmicToken = (GmicConfigToken)token;
 
-            outputFolder = token.OutputFolder;
+            outputFolder = gmicToken.OutputFolder;
         }
 
-        protected override void InitTokenFromDialog()
+        protected override void OnUpdateTokenFromDialog(EffectConfigToken dstToken)
         {
-            GmicConfigToken token = (GmicConfigToken)theEffectToken;
+            GmicConfigToken token = (GmicConfigToken)dstToken;
 
             token.OutputFolder = outputFolder;
-            token.Surface = surface;
+            token.OutputBitmap = outputBitmap;
         }
 
-        protected override void OnLoad(EventArgs e)
+        protected override void OnLoaded()
         {
-            base.OnLoad(e);
+            base.OnLoaded();
 
             Opacity = 0;
 
             if (File.Exists(GmicPath))
             {
+                if (GmicLayerUtil.IsTooLargeForX86<ColorBgra32>(Environment.CanvasSize))
+                {
+                    ShowErrorMessage(Resources.ImageTooLargeForX86);
+                    return;
+                }
+
                 workerThread = new Thread(new ThreadStart(GmicThread)) { IsBackground = true };
 
                 // The thread must use a single-threaded apartment to access the clipboard.
@@ -125,42 +134,6 @@ namespace GmicEffectPlugin
 
             try
             {
-                List<GmicLayer> layers = new();
-
-                Surface clipboardSurface = null;
-                try
-                {
-                    // Some G'MIC filters require the image to have more than one layer.
-                    // Because use Paint.NET does not currently support Effect plug-ins accessing
-                    // other layers in the document, allowing the user to place the second layer on
-                    // the clipboard is supported as a workaround.
-
-                    clipboardSurface = Services.GetService<IClipboardService>().TryGetSurface();
-
-                    if (clipboardSurface != null)
-                    {
-                        layers.Add(new GmicLayer(clipboardSurface, true));
-                        clipboardSurface = null;
-                    }
-                }
-                finally
-                {
-                    if (clipboardSurface != null)
-                    {
-                        clipboardSurface.Dispose();
-                    }
-                }
-
-                layers.Add(new GmicLayer(EnvironmentParameters.SourceSurface, false));
-
-                if (GmicLayerUtil.IsTooLargeForX86(layers))
-                {
-                    ShowErrorMessage(Resources.ImageTooLargeForX86);
-                    return;
-                }
-
-                server.AddLayers(layers);
-
                 server.Start();
 
                 string arguments = string.Format(CultureInfo.InvariantCulture, ".PDN {0}", server.FullPipeName);
@@ -178,8 +151,8 @@ namespace GmicEffectPlugin
                     }
                     else
                     {
-                        surface?.Dispose();
-                        surface = null;
+                        outputBitmap?.Dispose();
+                        outputBitmap = null;
                     }
                 }
             }
@@ -231,7 +204,7 @@ namespace GmicEffectPlugin
             }
             else
             {
-                IReadOnlyList<Surface> outputImages = state.OutputImages;
+                IReadOnlyList<IBitmap<ColorBgra32>> outputImages = state.OutputImages;
                 string gmicCommandName = server.GmicCommandName;
 
                 if (outputImages.Count > 1)
@@ -247,10 +220,13 @@ namespace GmicEffectPlugin
 
                         try
                         {
-                            OutputImageUtil.SaveAllToFolder(outputImages, outputFolder, gmicCommandName);
+                            OutputImageUtil.SaveAllToFolder(imagingFactory,
+                                                            outputImages,
+                                                            outputFolder,
+                                                            gmicCommandName);
 
-                            surface?.Dispose();
-                            surface = null;
+                            outputBitmap?.Dispose();
+                            outputBitmap = null;
                             result = DialogResult.OK;
                         }
                         catch (ArgumentException ex)
@@ -277,24 +253,24 @@ namespace GmicEffectPlugin
                 }
                 else
                 {
-                    Surface output = outputImages[0];
+                    IBitmap<ColorBgra32> output = outputImages[0];
 
-                    if (output.Size == EnvironmentParameters.SourceSurface.Size)
+                    if (output.Size == Environment.CanvasSize)
                     {
-                        if (surface == null)
-                        {
-                            surface = new Surface(EnvironmentParameters.SourceSurface.Width, EnvironmentParameters.SourceSurface.Height);
-                        }
+                        outputBitmap ??= imagingFactory.CreateBitmap<ColorBgra32>(Environment.CanvasSize);
 
-                        surface.CopySurface(output);
+                        using (IBitmapLock<ColorBgra32> bitmapLock = outputBitmap.Lock(BitmapLockOptions.Write))
+                        {
+                            output.CopyPixels(bitmapLock);
+                        }
                         result = DialogResult.OK;
                     }
                     else
                     {
-                        if (surface != null)
+                        if (outputBitmap != null)
                         {
-                            surface.Dispose();
-                            surface = null;
+                            outputBitmap.Dispose();
+                            outputBitmap = null;
                         }
 
                         // Place the full image on the clipboard when the size does not match the Paint.NET layer
@@ -308,10 +284,7 @@ namespace GmicEffectPlugin
                             string resizedImagePath = resizedImageSaveDialog.FileName;
                             try
                             {
-                                using (Bitmap bitmap = output.CreateAliasedBitmap())
-                                {
-                                    bitmap.Save(resizedImagePath, System.Drawing.Imaging.ImageFormat.Png);
-                                }
+                                OutputImageUtil.SaveResizedImage(imagingFactory, output, resizedImagePath);
 
                                 result = DialogResult.OK;
                             }
@@ -339,7 +312,7 @@ namespace GmicEffectPlugin
                     }
                 }
 
-                FinishTokenUpdate();
+                UpdateTokenFromDialog();
             }
 
             return result;
@@ -349,25 +322,30 @@ namespace GmicEffectPlugin
         {
             GmicPipeServer server = (GmicPipeServer)sender;
 
-            if (surface != null)
+            if (outputBitmap != null)
             {
-                surface.Dispose();
-                surface = null;
+                outputBitmap.Dispose();
+                outputBitmap = null;
             }
 
             OutputImageState state = server.OutputImageState;
 
             if (state.Error == null)
             {
-                IReadOnlyList<Surface> outputImages = state.OutputImages;
+                IReadOnlyList<IBitmap<ColorBgra32>> outputImages = state.OutputImages;
 
                 if (outputImages.Count == 1)
                 {
-                    Surface output = outputImages[0];
+                    IBitmap<ColorBgra32> output = outputImages[0];
 
-                    if (output.Size == EnvironmentParameters.SourceSurface.Size)
+                    if (output.Size == Environment.CanvasSize)
                     {
-                        surface = output.Clone();
+                        outputBitmap = imagingFactory.CreateBitmap<ColorBgra32>(Environment.CanvasSize);
+
+                        using (IBitmapLock<ColorBgra32> bitmapLock = outputBitmap.Lock(BitmapLockOptions.Write))
+                        {
+                            output.CopyPixels(bitmapLock);
+                        }
                     }
                 }
             }
@@ -375,7 +353,7 @@ namespace GmicEffectPlugin
             // The DialogResult property is not set here because it would close the dialog
             // and there is no way to tell if the user clicked "Apply" or "Ok".
             // The "Apply" button will show the image on the canvas without closing the G'MIC-Qt dialog.
-            FinishTokenUpdate();
+            UpdateTokenFromDialog();
         }
 
         private void ShowErrorMessage(Exception exception)

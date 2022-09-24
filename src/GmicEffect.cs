@@ -24,6 +24,8 @@ using PaintDotNet;
 using PaintDotNet.AppModel;
 using PaintDotNet.Clipboard;
 using PaintDotNet.Effects;
+using PaintDotNet.Imaging;
+using PaintDotNet.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -37,9 +39,10 @@ using System.Windows.Forms;
 namespace GmicEffectPlugin
 {
     [PluginSupportInfo(typeof(PluginSupportInfo))]
-    public sealed class GmicEffect : Effect
+    public sealed class GmicEffect : BitmapEffect
     {
         private bool repeatEffect;
+        private IBitmap<ColorBgra32> outputBitmap;
 
         internal static string StaticName
         {
@@ -57,18 +60,28 @@ namespace GmicEffectPlugin
             }
         }
 
-        public GmicEffect() : base(StaticName, StaticImage, "Advanced", new EffectOptions { Flags = EffectFlags.Configurable })
+        public GmicEffect() : base(StaticName, StaticImage, "Advanced", new BitmapEffectOptions { Flags = EffectFlags.Configurable })
         {
             repeatEffect = true;
         }
 
-        public override EffectConfigDialog CreateConfigDialog()
+        protected override void OnDispose(bool disposing)
+        {
+            if (disposing)
+            {
+                DisposableUtil.Free(ref outputBitmap);
+            }
+
+            base.OnDispose(disposing);
+        }
+
+        protected override EffectConfigForm OnCreateConfigForm()
         {
             repeatEffect = false;
 
             // The services are passed to the constructor as a parameter because the EffectConfigDialog class
             // may not have its Services property initialized when the constructor runs.
-            return new GmicConfigDialog(Services);
+            return new GmicConfigDialog(Services, Environment);
         }
 
         private void ShowErrorMessage(Exception exception)
@@ -81,133 +94,96 @@ namespace GmicEffectPlugin
             Services.GetService<IExceptionDialogService>().ShowErrorDialog(null, message, string.Empty);
         }
 
-        protected override void OnSetRenderInfo(EffectConfigToken parameters, RenderArgs dstArgs, RenderArgs srcArgs)
+        private void RunGmicRepeatEffect(string lastOutputFolder)
         {
-            if (repeatEffect)
+            if (File.Exists(GmicConfigDialog.GmicPath))
             {
-                GmicConfigToken token = (GmicConfigToken)parameters;
-
-                if (token.Surface != null)
+                if (GmicLayerUtil.IsTooLargeForX86<ColorBgra32>(Environment.CanvasSize))
                 {
-                    token.Surface.Dispose();
-                    token.Surface = null;
+                    ShowErrorMessage(Resources.ImageTooLargeForX86);
+                    return;
                 }
 
-                if (File.Exists(GmicConfigDialog.GmicPath))
+                try
                 {
-                    try
+                    using (GmicPipeServer server = new(Services, Environment))
                     {
-                        using (GmicPipeServer server = new(Services))
+                        server.Start();
+
+                        string arguments = string.Format(CultureInfo.InvariantCulture, ".PDN {0} reapply", server.FullPipeName);
+
+                        using (Process process = new())
                         {
-                            List<GmicLayer> layers = new();
+                            process.StartInfo = new ProcessStartInfo(GmicConfigDialog.GmicPath, arguments);
 
-                            Surface clipboardSurface = null;
-                            try
+                            process.Start();
+                            process.WaitForExit();
+
+                            if (process.ExitCode == GmicExitCode.Ok)
                             {
-                                // Some G'MIC filters require the image to have more than one layer.
-                                // Because use Paint.NET does not currently support Effect plug-ins accessing
-                                // other layers in the document, allowing the user to place the second layer on
-                                // the clipboard is supported as a workaround.
+                                OutputImageState state = server.OutputImageState;
 
-                                clipboardSurface = Services.GetService<IClipboardService>().TryGetSurface();
-
-                                if (clipboardSurface != null)
+                                if (state.Error != null)
                                 {
-                                    layers.Add(new GmicLayer(clipboardSurface, true));
-                                    clipboardSurface = null;
+                                    ShowErrorMessage(state.Error);
                                 }
-                            }
-                            finally
-                            {
-                                if (clipboardSurface != null)
+                                else
                                 {
-                                    clipboardSurface.Dispose();
-                                }
-                            }
+                                    IReadOnlyList<IBitmap<ColorBgra32>> outputImages = state.OutputImages;
+                                    string gmicCommandName = server.GmicCommandName;
 
-                            layers.Add(new GmicLayer(EnvironmentParameters.SourceSurface, false));
-
-                            if (GmicLayerUtil.IsTooLargeForX86(layers))
-                            {
-                                ShowErrorMessage(Resources.ImageTooLargeForX86);
-                                return;
-                            }
-
-                            server.AddLayers(layers);
-
-                            server.Start();
-
-                            string arguments = string.Format(CultureInfo.InvariantCulture, ".PDN {0} reapply", server.FullPipeName);
-
-                            using (Process process = new())
-                            {
-                                process.StartInfo = new ProcessStartInfo(GmicConfigDialog.GmicPath, arguments);
-
-                                process.Start();
-                                process.WaitForExit();
-
-                                if (process.ExitCode == GmicExitCode.Ok)
-                                {
-                                    OutputImageState state = server.OutputImageState;
-
-                                    if (state.Error != null)
+                                    if (outputImages.Count > 1)
                                     {
-                                        ShowErrorMessage(state.Error);
+                                        using (PlatformFolderBrowserDialog folderBrowserDialog = new())
+                                        {
+                                            folderBrowserDialog.ClassicFolderBrowserDescription = Resources.ClassicFolderBrowserDescription;
+                                            folderBrowserDialog.VistaFolderBrowserTitle = Resources.VistaFolderBrowserTitle;
+
+                                            if (!string.IsNullOrWhiteSpace(lastOutputFolder))
+                                            {
+                                                folderBrowserDialog.SelectedPath = lastOutputFolder;
+                                            }
+
+                                            if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+                                            {
+                                                string outputFolder = folderBrowserDialog.SelectedPath;
+
+                                                OutputImageUtil.SaveAllToFolder(Environment.ImagingFactory,
+                                                                                outputImages,
+                                                                                outputFolder,
+                                                                                gmicCommandName);
+                                            }
+                                        }
                                     }
                                     else
                                     {
-                                        IReadOnlyList<Surface> outputImages = state.OutputImages;
-                                        string gmicCommandName = server.GmicCommandName;
+                                        IBitmap<ColorBgra32> output = outputImages[0];
 
-                                        if (outputImages.Count > 1)
+                                        if (output.Size == Environment.CanvasSize)
                                         {
-                                            using (PlatformFolderBrowserDialog folderBrowserDialog = new())
+                                            outputBitmap ??= Environment.ImagingFactory.CreateBitmap<ColorBgra32>(output.Size);
+                                            using (IBitmapLock<ColorBgra32> bitmapLock = outputBitmap.Lock(BitmapLockOptions.Write))
                                             {
-                                                folderBrowserDialog.ClassicFolderBrowserDescription = Resources.ClassicFolderBrowserDescription;
-                                                folderBrowserDialog.VistaFolderBrowserTitle = Resources.VistaFolderBrowserTitle;
-
-                                                if (!string.IsNullOrWhiteSpace(token.OutputFolder))
-                                                {
-                                                    folderBrowserDialog.SelectedPath = token.OutputFolder;
-                                                }
-
-                                                if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
-                                                {
-                                                    string outputFolder = folderBrowserDialog.SelectedPath;
-
-                                                    OutputImageUtil.SaveAllToFolder(outputImages, outputFolder, gmicCommandName);
-                                                }
+                                                output.CopyPixels(bitmapLock);
                                             }
                                         }
                                         else
                                         {
-                                            Surface output = outputImages[0];
+                                            // Place the full image on the clipboard when the size does not match the Paint.NET layer
+                                            // and prompt the user to save it.
+                                            // The resized image will not be copied to the Paint.NET canvas.
+                                            Services.GetService<IClipboardService>().SetImage(output);
 
-                                            if (output.Width == srcArgs.Surface.Width && output.Height == srcArgs.Surface.Height)
+                                            using (PlatformFileSaveDialog resizedImageSaveDialog = new())
                                             {
-                                                token.Surface = output.Clone();
-                                            }
-                                            else
-                                            {
-                                                // Place the full image on the clipboard when the size does not match the Paint.NET layer
-                                                // and prompt the user to save it.
-                                                // The resized image will not be copied to the Paint.NET canvas.
-                                                Services.GetService<IClipboardService>().SetImage(output);
-
-                                                using (PlatformFileSaveDialog resizedImageSaveDialog = new())
+                                                resizedImageSaveDialog.Filter = Resources.ResizedImageSaveDialogFilter;
+                                                resizedImageSaveDialog.Title = Resources.ResizedImageSaveDialogTitle;
+                                                resizedImageSaveDialog.FileName = gmicCommandName + "_" + DateTime.Now.ToString("yyyyMMdd-THHmmss") + ".png";
+                                                if (resizedImageSaveDialog.ShowDialog() == DialogResult.OK)
                                                 {
-                                                    resizedImageSaveDialog.Filter = Resources.ResizedImageSaveDialogFilter;
-                                                    resizedImageSaveDialog.Title = Resources.ResizedImageSaveDialogTitle;
-                                                    resizedImageSaveDialog.FileName = gmicCommandName + "_" + DateTime.Now.ToString("yyyyMMdd-THHmmss") + ".png";
-                                                    if (resizedImageSaveDialog.ShowDialog() == DialogResult.OK)
-                                                    {
-                                                        string resizedImagePath = resizedImageSaveDialog.FileName;
+                                                    string resizedImagePath = resizedImageSaveDialog.FileName;
 
-                                                        using (Bitmap bitmap = output.CreateAliasedBitmap())
-                                                        {
-                                                            bitmap.Save(resizedImagePath, System.Drawing.Imaging.ImageFormat.Png);
-                                                        }
-                                                    }
+                                                    OutputImageUtil.SaveResizedImage(Environment.ImagingFactory, output, resizedImagePath);
                                                 }
                                             }
                                         }
@@ -216,43 +192,62 @@ namespace GmicEffectPlugin
                             }
                         }
                     }
-                    catch (ArgumentException ex)
-                    {
-                        ShowErrorMessage(ex);
-                    }
-                    catch (ExternalException ex)
-                    {
-                        ShowErrorMessage(ex);
-                    }
-                    catch (IOException ex)
-                    {
-                        ShowErrorMessage(ex);
-                    }
-                    catch (SecurityException ex)
-                    {
-                        ShowErrorMessage(ex);
-                    }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        ShowErrorMessage(ex);
-                    }
                 }
-                else
+                catch (ArgumentException ex)
                 {
-                    ShowErrorMessage(Resources.GmicNotFound);
+                    ShowErrorMessage(ex);
+                }
+                catch (ExternalException ex)
+                {
+                    ShowErrorMessage(ex);
+                }
+                catch (IOException ex)
+                {
+                    ShowErrorMessage(ex);
+                }
+                catch (SecurityException ex)
+                {
+                    ShowErrorMessage(ex);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    ShowErrorMessage(ex);
                 }
             }
-
-            base.OnSetRenderInfo(parameters, dstArgs, srcArgs);
+            else
+            {
+                ShowErrorMessage(Resources.GmicNotFound);
+            }
         }
 
-        public override void Render(EffectConfigToken parameters, RenderArgs dstArgs, RenderArgs srcArgs, Rectangle[] rois, int startIndex, int length)
+        protected override void OnSetToken(EffectConfigToken parameters)
         {
             GmicConfigToken token = (GmicConfigToken)parameters;
 
-            if (token.Surface != null)
+            if (repeatEffect)
             {
-                dstArgs.Surface.CopySurface(token.Surface, rois, startIndex, length);
+                RunGmicRepeatEffect(token.OutputFolder);
+            }
+            else
+            {
+                if (token.OutputBitmap != null)
+                {
+                    outputBitmap ??= Environment.ImagingFactory.CreateBitmap<ColorBgra32>(token.OutputBitmap.Size);
+                    using (IBitmapLock<ColorBgra32> bitmapLock = outputBitmap.Lock(BitmapLockOptions.Write))
+                    {
+                        token.OutputBitmap.CopyPixels(bitmapLock);
+                    }
+                }
+            }
+
+            base.OnSetToken(parameters);
+        }
+
+        protected override void OnRender(RegionPtr<ColorBgra32> dst, Point2Int32 renderOffset)
+        {
+            if (outputBitmap != null)
+            {
+                outputBitmap.CopyPixels(dst, renderOffset);
             }
         }
     }

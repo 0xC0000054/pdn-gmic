@@ -19,6 +19,7 @@
 *
 */
 
+using PaintDotNet.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,26 +31,23 @@ namespace GmicEffectPlugin
         private static readonly Lazy<bool> Is32BitGmic = new(GetIs32BitGmic);
 
         /// <summary>
-        /// Determines whether the specified layers are too large for the 32-bit version of G'MIC-Qt.
+        /// Determines whether the specified document is too large for the 32-bit version of G'MIC-Qt.
         /// </summary>
-        /// <param name="layers">The layers.</param>
+        /// <param name="canvasSize">The document size.</param>
         /// <returns>
-        ///   <see langword="true"/> if specified layers are too large for the 32-bit version of G'MIC-Qt; otherwise, <see langword="false"/>.
+        ///   <see langword="true"/> if specified document is too large for the 32-bit version of G'MIC-Qt; otherwise, <see langword="false"/>.
         /// </returns>
-        internal static bool IsTooLargeForX86(List<GmicLayer> layers)
+        internal static unsafe bool IsTooLargeForX86<TPixel>(SizeInt32 canvasSize) where TPixel : unmanaged
         {
             if (Is32BitGmic.Value)
             {
                 // Check that the layer data length is within the limit for the size_t type on 32-bit builds.
                 // This prevents an integer overflow when calculating the total image size if the image is larger than 4GB.
+                //
+                // All Paint.NET layers are the same size as the document, so we don't need to check the individual layer sizes.
+                ulong layerDataSize = (ulong)canvasSize.Width * (ulong)canvasSize.Height * (ulong)sizeof(TPixel);
 
-                foreach (GmicLayer layer in layers)
-                {
-                    if (layer.Surface.Scan0.Length > uint.MaxValue)
-                    {
-                        return true;
-                    }
-                }
+                return layerDataSize > uint.MaxValue;
             }
 
             return false;

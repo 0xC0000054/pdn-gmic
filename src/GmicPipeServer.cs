@@ -21,7 +21,10 @@
 
 using PaintDotNet;
 using PaintDotNet.AppModel;
+using PaintDotNet.Effects;
+using PaintDotNet.Imaging;
 using PaintDotNet.IO;
+using PaintDotNet.Rendering;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -49,6 +52,8 @@ namespace GmicEffectPlugin
         private readonly SynchronizationContext synchronizationContext;
         private readonly SendOrPostCallback outputImageCallback;
         private readonly IArrayPoolService arrayPoolService;
+        private readonly IBitmapEffectEnvironment effectEnvironment;
+        private readonly SizeInt32 canvasSize;
 #pragma warning restore IDE0032 // Use auto property
 
         private static readonly RectangleF WholeImageCropRect = new(0.0f, 0.0f, 1.0f, 1.0f);
@@ -56,8 +61,15 @@ namespace GmicEffectPlugin
         /// <summary>
         /// Initializes a new instance of the <see cref="GmicPipeServer"/> class.
         /// </summary>
-        /// <exception cref="ArgumentNullException"><paramref name="services"/> is null.</exception>
-        public GmicPipeServer(IServiceProvider services) : this(null, services)
+        /// <param name="services">The Paint.NET effect service provider.</param>
+        /// <param name="effectEnvironment">The effect environment.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="services"/> is null.
+        /// -or-
+        /// <paramref name="effectEnvironment"/> is null.
+        /// </exception>
+        public GmicPipeServer(IServiceProvider services, IBitmapEffectEnvironment effectEnvironment)
+            : this(null, services, effectEnvironment)
         {
         }
 
@@ -66,14 +78,24 @@ namespace GmicEffectPlugin
         /// </summary>
         /// <param name="synchronizationContext">The synchronization context.</param>
         /// <param name="services">The Paint.NET effect service provider.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="services"/> is null.</exception>
-        public GmicPipeServer(SynchronizationContext synchronizationContext, IServiceProvider services)
+        /// <param name="effectEnvironment">The effect environment.</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="services"/> is null.
+        /// -or-
+        /// <paramref name="effectEnvironment"/> is null.
+        /// </exception>
+        public GmicPipeServer(SynchronizationContext synchronizationContext,
+                              IServiceProvider services,
+                              IBitmapEffectEnvironment effectEnvironment)
         {
             ArgumentNullException.ThrowIfNull(services);
+            ArgumentNullException.ThrowIfNull(effectEnvironment);
 
             pipeName = "PDN_GMIC" + Guid.NewGuid().ToString();
             fullPipeName = @"\\.\pipe\" + pipeName;
             this.synchronizationContext = synchronizationContext;
+            this.effectEnvironment = effectEnvironment;
+            canvasSize = effectEnvironment.CanvasSize;
             outputImageCallback = new SendOrPostCallback(OutputImageChangedCallback);
             arrayPoolService = services.GetService<IArrayPoolService>();
             layers = new List<GmicLayer>();
@@ -113,23 +135,6 @@ namespace GmicEffectPlugin
         }
 
         /// <summary>
-        /// Adds the layers.
-        /// </summary>
-        /// <param name="collection">The collection.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="collection"/> is null.</exception>
-        /// <exception cref="ObjectDisposedException">The class has been disposed.</exception>
-        public void AddLayers(IEnumerable<GmicLayer> collection)
-        {
-            VerifyNotDisposed();
-
-            layers.AddRange(collection);
-            // The last layer in the list is always the layer the user has selected in Paint.NET,
-            // so it will be treated as the active layer.
-            // The clipboard layer (if present) will be placed above the active layer.
-            activeLayerIndex = layers.Count - 1;
-        }
-
-        /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         public void Dispose()
@@ -165,15 +170,31 @@ namespace GmicEffectPlugin
         /// <summary>
         /// Starts the server.
         /// </summary>
-        /// <exception cref="InvalidOperationException">Must call AddLayers with at least one layer before calling Start.</exception>
+        /// <exception cref="InvalidOperationException">This instance is already running.</exception>
         /// <exception cref="ObjectDisposedException">The class has been disposed.</exception>
         public void Start()
         {
             VerifyNotDisposed();
-            if (layers.Count == 0)
+
+            if (server != null)
             {
-                throw new InvalidOperationException("Must call AddLayers with at least one layer before calling Start.");
+                throw new InvalidOperationException("This instance is already running.");
             }
+
+            IReadOnlyList<IEffectLayerInfo> effectLayerInfos = effectEnvironment.Document.Layers;
+            int layerCount = effectLayerInfos.Count;
+
+            layers.Capacity = layerCount;
+
+            // Paint.NET stores layers in bottom-to-top order and G'MIC expects the layers to be in
+            // top-to-bottom order (which is what GIMP uses).
+            for (int i = layerCount - 1; i >= 0; i--)
+            {
+                IEffectLayerInfo layerInfo = effectLayerInfos[i];
+
+                layers.Add(new GmicLayer(layerInfo));
+            }
+            activeLayerIndex = layerCount - (1 + effectEnvironment.SourceLayerIndex);
 
             server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
             server.BeginWaitForConnection(WaitForConnectionCallback, null);
@@ -355,27 +376,16 @@ namespace GmicEffectPlugin
             switch (inputMode)
             {
                 case InputMode.NoInput:
-                case InputMode.AllHiddenLayers:
                     break;
                 case InputMode.ActiveLayer:
                 case InputMode.ActiveAndBelow:
-                    // The last layer in the list is always the layer the user has selected in Paint.NET,
-                    // so it will be treated as the active layer.
-                    // The clipboard layer (if present) will be placed above the active layer.
-                    GmicLayer activeLayer = layers[activeLayerIndex];
-
-                    width = activeLayer.Width;
-                    height = activeLayer.Height;
-                    break;
-
                 case InputMode.AllLayers:
                 case InputMode.ActiveAndAbove:
                 case InputMode.AllVisibleLayers:
-                    foreach (GmicLayer layer in layers)
-                    {
-                        width = Math.Max(width, layer.Width);
-                        height = Math.Max(height, layer.Height);
-                    }
+                case InputMode.AllHiddenLayers:
+                    // Paint.NET layers are always the same size as the parent document.
+                    width = canvasSize.Width;
+                    height = canvasSize.Height;
                     break;
                 default:
                     throw new InvalidOperationException("Unsupported InputMode: " + inputMode.ToString());
@@ -446,25 +456,78 @@ namespace GmicEffectPlugin
 
         private IReadOnlyList<GmicLayer> GetRequestedLayers(InputMode mode)
         {
-            if (mode == InputMode.ActiveLayer ||
-                mode == InputMode.ActiveAndBelow)
+            if (mode == InputMode.ActiveLayer)
             {
-                // The last layer in the list is always the layer the user has selected in Paint.NET,
-                // so it will be treated as the active layer.
-                // The clipboard layer (if present) will be placed above the active layer.
-
                 return new GmicLayer[] { layers[activeLayerIndex] };
+            }
+            else if (mode == InputMode.ActiveAndAbove)
+            {
+                // The layers are stored in top-to-bottom order, which is what G'MIC uses.
+                List<GmicLayer> requestedLayers = new()
+                {
+                    layers[activeLayerIndex]
+                };
+
+                if (activeLayerIndex < (layers.Count - 1))
+                {
+                    requestedLayers.Add(layers[activeLayerIndex + 1]);
+                }
+
+                return requestedLayers;
+            }
+            else if (mode == InputMode.ActiveAndBelow)
+            {
+                List<GmicLayer> requestedLayers = new();
+
+                // The layers are stored in top-to-bottom order, which is what G'MIC uses.
+                if (activeLayerIndex > 0)
+                {
+                    requestedLayers.Add(layers[activeLayerIndex - 1]);
+                }
+                requestedLayers.Add(layers[activeLayerIndex]);
+
+                return requestedLayers;
+            }
+            else if (mode == InputMode.AllVisibleLayers)
+            {
+                List<GmicLayer> requestedLayers = new();
+
+                // The layers are stored in top-to-bottom order, which is what G'MIC uses.
+                for (int i = 0; i < layers.Count; i--)
+                {
+                    GmicLayer layer = layers[i];
+
+                    if (layer.Visible)
+                    {
+                        requestedLayers.Add(layer);
+                    }
+                }
+
+                return requestedLayers;
+            }
+            else if (mode == InputMode.AllHiddenLayers)
+            {
+                List<GmicLayer> requestedLayers = new();
+
+                // The layers are stored in top-to-bottom order, which is what G'MIC uses.
+                for (int i = 0; i < layers.Count; i--)
+                {
+                    GmicLayer layer = layers[i];
+
+                    if (!layer.Visible)
+                    {
+                        requestedLayers.Add(layer);
+                    }
+                }
+
+                return requestedLayers;
             }
             else
             {
                 switch (mode)
                 {
                     case InputMode.AllLayers:
-                    case InputMode.ActiveAndAbove:
-                    case InputMode.AllVisibleLayers:
                         return layers;
-                    case InputMode.AllHiddenLayers:
-                        return Array.Empty<GmicLayer>();
                     default:
                         throw new ArgumentException("The mode was not handled: " + mode.ToString());
                 }
@@ -494,9 +557,7 @@ namespace GmicEffectPlugin
 
             foreach (GmicLayer layer in layers)
             {
-                Surface surface = layer.Surface;
-                bool disposeSurface = false;
-                int destinationImageStride = surface.Stride;
+                RectInt32 roi = layer.Bounds;
 
                 if (cropRect != WholeImageCropRect)
                 {
@@ -505,54 +566,38 @@ namespace GmicEffectPlugin
                     int cropWidth = (int)Math.Min(layer.Width - cropX, 1 + Math.Ceiling(cropRect.Width * layer.Width));
                     int cropHeight = (int)Math.Min(layer.Height - cropY, 1 + Math.Ceiling(cropRect.Height * layer.Height));
 
-                    try
-                    {
-                        surface = layer.Surface.CreateWindow(cropX, cropY, cropWidth, cropHeight);
-                    }
-                    catch (ArgumentOutOfRangeException ex)
-                    {
-                        throw new InvalidOperationException(string.Format("Surface.CreateWindow bounds invalid, cropRect={0}", cropRect.ToString()), ex);
-                    }
-                    disposeSurface = true;
-                    destinationImageStride = cropWidth * ColorBgra.SizeOf;
+                    roi = new RectInt32(cropX, cropY, cropWidth, cropHeight);
                 }
 
                 string mapName = "pdn_" + Guid.NewGuid().ToString();
+                int destinationStride = roi.Width * sizeof(ColorBgra32);
 
-                try
+                long destinationSizeInBytes = (long)destinationStride * roi.Height;
+
+                MemoryMappedFile file = MemoryMappedFile.CreateNew(mapName, destinationSizeInBytes);
+                memoryMappedFiles.Add(file);
+
+                using (MemoryMappedViewAccessor accessor = file.CreateViewAccessor())
                 {
-                    MemoryMappedFile file = MemoryMappedFile.CreateNew(mapName, surface.Scan0.Length);
-                    memoryMappedFiles.Add(file);
-
-                    using (MemoryMappedViewAccessor accessor = file.CreateViewAccessor())
+                    byte* destination = null;
+                    try
                     {
-                        byte* destination = null;
-                        try
-                        {
-                            accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref destination);
+                        accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref destination);
 
-                            for (int y = 0; y < surface.Height; y++)
-                            {
-                                ColorBgra* src = surface.GetRowPointerUnchecked(y);
-                                byte* dst = destination + (y * destinationImageStride);
-
-                                Buffer.MemoryCopy(src, dst, destinationImageStride, destinationImageStride);
-                            }
-                        }
-                        finally
+                        using (IBitmap<ColorBgra32> bitmap = layer.ToBitmap(roi))
+                        using (IBitmapLock<ColorBgra32> bitmapLock = bitmap.Lock(BitmapLockOptions.Read))
                         {
-                            if (destination != null)
-                            {
-                                accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-                            }
+                            RegionPtr<ColorBgra32> dst = new((ColorBgra32*)destination, bitmap.Size, destinationStride);
+
+                            bitmapLock.AsRegionPtr().CopyTo(dst);
                         }
                     }
-                }
-                finally
-                {
-                    if (disposeSurface)
+                    finally
                     {
-                        surface.Dispose();
+                        if (destination != null)
+                        {
+                            accessor.SafeMemoryMappedViewHandle.ReleasePointer();
+                        }
                     }
                 }
 
@@ -560,9 +605,9 @@ namespace GmicEffectPlugin
                     CultureInfo.InvariantCulture,
                     "{0},{1},{2},{3}\n",
                     mapName,
-                    surface.Width.ToString(CultureInfo.InvariantCulture),
-                    surface.Height.ToString(CultureInfo.InvariantCulture),
-                    destinationImageStride.ToString(CultureInfo.InvariantCulture));
+                    roi.Width.ToString(CultureInfo.InvariantCulture),
+                    roi.Height.ToString(CultureInfo.InvariantCulture),
+                    destinationStride.ToString(CultureInfo.InvariantCulture));
             }
 
             return reply.ToString();
@@ -574,12 +619,12 @@ namespace GmicEffectPlugin
         {
             string reply = string.Empty;
 
-            List<Surface> outputImages = null;
+            List<IBitmap<ColorBgra32>> outputImages = null;
             Exception error = null;
 
             try
             {
-                outputImages = new List<Surface>(outputLayers.Count);
+                outputImages = new List<IBitmap<ColorBgra32>>(outputLayers.Count);
 
                 for (int i = 0; i < outputLayers.Count; i++)
                 {
@@ -600,12 +645,12 @@ namespace GmicEffectPlugin
                     int height = int.Parse(layerArgs[2], NumberStyles.Integer, CultureInfo.InvariantCulture);
                     int stride = int.Parse(layerArgs[3], NumberStyles.Integer, CultureInfo.InvariantCulture);
 
-                    Surface output = null;
+                    IBitmap<ColorBgra32> output = null;
                     bool disposeOutput = true;
 
                     try
                     {
-                        output = new Surface(width, height);
+                        output = effectEnvironment.ImagingFactory.CreateBitmap<ColorBgra32>(width, height);
 
                         using (MemoryMappedFile file = MemoryMappedFile.OpenExisting(sharedMemoryName))
                         {
@@ -616,12 +661,11 @@ namespace GmicEffectPlugin
                                 {
                                     accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref sourceScan0);
 
-                                    for (int y = 0; y < output.Height; y++)
+                                    using (IBitmapLock<ColorBgra32> bitmapLock = output.Lock(BitmapLockOptions.Write))
                                     {
-                                        byte* src = sourceScan0 + (y * stride);
-                                        ColorBgra* dst = output.GetRowPointerUnchecked(y);
+                                        RegionPtr<ColorBgra32> src = new((ColorBgra32*)sourceScan0, width, height, stride);
 
-                                        Buffer.MemoryCopy(src, dst, stride, stride);
+                                        src.CopyTo(bitmapLock.AsRegionPtr());
                                     }
                                 }
                                 finally
@@ -649,7 +693,7 @@ namespace GmicEffectPlugin
                 // Set the first output layer as the active layer.
                 // This allows multiple G'MIC effects to be "layered" using the Apply button.
                 layers[activeLayerIndex].Dispose();
-                layers[activeLayerIndex] = new GmicLayer(outputImages[0].Clone(), true);
+                layers[activeLayerIndex] = new GmicLayer(outputImages[0]);
             }
             catch (Exception ex)
             {

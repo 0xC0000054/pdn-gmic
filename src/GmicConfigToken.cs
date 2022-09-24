@@ -19,8 +19,8 @@
 *
 */
 
-using PaintDotNet;
 using PaintDotNet.Effects;
+using PaintDotNet.Imaging;
 
 namespace GmicEffectPlugin
 {
@@ -29,7 +29,7 @@ namespace GmicEffectPlugin
         public GmicConfigToken()
         {
             OutputFolder = null;
-            Surface = null;
+            OutputBitmap = null;
         }
 
         public string OutputFolder
@@ -38,7 +38,7 @@ namespace GmicEffectPlugin
             set;
         }
 
-        public Surface Surface
+        public IBitmap<ColorBgra32> OutputBitmap
         {
             get;
             set;
@@ -47,7 +47,7 @@ namespace GmicEffectPlugin
         private GmicConfigToken(GmicConfigToken cloneMe)
         {
             OutputFolder = cloneMe.OutputFolder;
-            Surface = cloneMe.Surface;
+            OutputBitmap = cloneMe.OutputBitmap;
         }
 
         public override object Clone()

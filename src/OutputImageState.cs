@@ -20,14 +20,15 @@
 */
 
 using PaintDotNet;
+using PaintDotNet.Imaging;
 using System;
 using System.Collections.Generic;
 
 namespace GmicEffectPlugin
 {
-    internal sealed class OutputImageState : IDisposable
+    internal sealed class OutputImageState : Disposable
     {
-        public OutputImageState(Exception error, IReadOnlyList<Surface> outputImages)
+        public OutputImageState(Exception error, IReadOnlyList<IBitmap<ColorBgra32>> outputImages)
         {
             Error = error;
             OutputImages = outputImages;
@@ -35,13 +36,13 @@ namespace GmicEffectPlugin
 
         public Exception Error { get; }
 
-        public IReadOnlyList<Surface> OutputImages { get; private set; }
+        public IReadOnlyList<IBitmap<ColorBgra32>> OutputImages { get; private set; }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            if (OutputImages != null)
+            if (disposing && OutputImages != null)
             {
-                IReadOnlyList<Surface> output = OutputImages;
+                IReadOnlyList<IBitmap<ColorBgra32>> output = OutputImages;
                 OutputImages = null;
 
                 for (int i = 0; i < output.Count; i++)
@@ -49,6 +50,8 @@ namespace GmicEffectPlugin
                     output[i]?.Dispose();
                 }
             }
+
+            base.Dispose(disposing);
         }
     }
 }
