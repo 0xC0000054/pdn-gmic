@@ -66,7 +66,7 @@ namespace GmicEffectPlugin
             server = new GmicPipeServer(dialogSynchronizationContext, effectServices, effectEnvironment);
             server.OutputImageChanged += UpdateOutputImage;
             outputFolder = string.Empty;
-            imagingFactory = effectServices.GetService<IImagingFactory>();
+            imagingFactory = effectEnvironment.ImagingFactory;
         }
 
         protected override void OnDispose(bool disposing)
