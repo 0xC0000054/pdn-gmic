@@ -147,8 +147,7 @@ namespace GmicEffectPlugin
                     }
                     else
                     {
-                        outputBitmap?.Dispose();
-                        outputBitmap = null;
+                        DisposableUtil.Free(ref outputBitmap);
                     }
                 }
             }
@@ -221,8 +220,7 @@ namespace GmicEffectPlugin
                                                             outputFolder,
                                                             gmicCommandName);
 
-                            outputBitmap?.Dispose();
-                            outputBitmap = null;
+                            DisposableUtil.Free(ref outputBitmap);
                             result = DialogResult.OK;
                         }
                         catch (ArgumentException ex)
@@ -263,11 +261,7 @@ namespace GmicEffectPlugin
                     }
                     else
                     {
-                        if (outputBitmap != null)
-                        {
-                            outputBitmap.Dispose();
-                            outputBitmap = null;
-                        }
+                        DisposableUtil.Free(ref outputBitmap);
 
                         // Place the full image on the clipboard when the size does not match the Paint.NET layer
                         // and prompt the user to save it.
@@ -318,11 +312,7 @@ namespace GmicEffectPlugin
         {
             GmicPipeServer server = (GmicPipeServer)sender;
 
-            if (outputBitmap != null)
-            {
-                outputBitmap.Dispose();
-                outputBitmap = null;
-            }
+            DisposableUtil.Free(ref outputBitmap);
 
             OutputImageState state = server.OutputImageState;
 
