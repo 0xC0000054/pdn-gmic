@@ -38,7 +38,7 @@ using System.Windows.Forms;
 
 namespace GmicEffectPlugin
 {
-    internal sealed class GmicConfigDialog : EffectConfigForm
+    internal sealed class GmicConfigDialog : EffectConfigForm<GmicEffect, GmicConfigToken>
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Code Quality",
@@ -85,17 +85,13 @@ namespace GmicEffectPlugin
             return new GmicConfigToken();
         }
 
-        protected override void OnUpdateDialogFromToken(EffectConfigToken token)
+        protected override void OnUpdateDialogFromToken(GmicConfigToken token)
         {
-            GmicConfigToken gmicToken = (GmicConfigToken)token;
-
-            outputFolder = gmicToken.OutputFolder;
+            outputFolder = token.OutputFolder;
         }
 
-        protected override void OnUpdateTokenFromDialog(EffectConfigToken dstToken)
+        protected override void OnUpdateTokenFromDialog(GmicConfigToken token)
         {
-            GmicConfigToken token = (GmicConfigToken)dstToken;
-
             token.OutputFolder = outputFolder;
             token.OutputBitmap = outputBitmap;
         }

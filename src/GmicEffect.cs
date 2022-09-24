@@ -39,7 +39,7 @@ using System.Windows.Forms;
 namespace GmicEffectPlugin
 {
     [PluginSupportInfo(typeof(PluginSupportInfo))]
-    public sealed class GmicEffect : BitmapEffect
+    public sealed class GmicEffect : BitmapEffect<GmicConfigToken>
     {
         private bool repeatEffect;
         private IBitmap<ColorBgra32> outputBitmap;
@@ -220,10 +220,8 @@ namespace GmicEffectPlugin
             }
         }
 
-        protected override void OnSetToken(EffectConfigToken parameters)
+        protected override void OnSetToken(GmicConfigToken token)
         {
-            GmicConfigToken token = (GmicConfigToken)parameters;
-
             if (repeatEffect)
             {
                 RunGmicRepeatEffect(token.OutputFolder);
@@ -240,7 +238,7 @@ namespace GmicEffectPlugin
                 }
             }
 
-            base.OnSetToken(parameters);
+            base.OnSetToken(token);
         }
 
         protected override void OnRender(RegionPtr<ColorBgra32> dst, Point2Int32 renderOffset)
