@@ -354,7 +354,7 @@ namespace GmicEffectPlugin
 
         private static RectangleF GetCropRectangle(string packedCropRect)
         {
-            string[] cropCoords = packedCropRect.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] cropCoords = packedCropRect.Split(',', StringSplitOptions.RemoveEmptyEntries);
             if (cropCoords.Length != 4)
             {
                 throw new InvalidOperationException("A crop rectangle message argument must have 4 values.");
@@ -633,7 +633,7 @@ namespace GmicEffectPlugin
                         throw new InvalidOperationException("Expected a layer message argument.");
                     }
 
-                    string[] layerArgs = packedLayerArgs.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] layerArgs = packedLayerArgs.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
                     if (layerArgs.Length != 4)
                     {
