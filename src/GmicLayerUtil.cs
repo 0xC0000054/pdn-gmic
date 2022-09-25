@@ -21,7 +21,6 @@
 
 using PaintDotNet.Rendering;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace GmicEffectPlugin
