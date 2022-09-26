@@ -561,10 +561,10 @@ namespace GmicEffectPlugin
 
                 if (cropRect != WholeImageCropRect)
                 {
-                    int cropX = (int)Math.Floor(cropRect.X * layer.Width);
-                    int cropY = (int)Math.Floor(cropRect.Y * layer.Height);
-                    int cropWidth = (int)Math.Min(layer.Width - cropX, 1 + Math.Ceiling(cropRect.Width * layer.Width));
-                    int cropHeight = (int)Math.Min(layer.Height - cropY, 1 + Math.Ceiling(cropRect.Height * layer.Height));
+                    int cropX = (int)MathF.Floor(cropRect.X * layer.Width);
+                    int cropY = (int)MathF.Floor(cropRect.Y * layer.Height);
+                    int cropWidth = (int)MathF.Min(layer.Width - cropX, 1 + MathF.Ceiling(cropRect.Width * layer.Width));
+                    int cropHeight = (int)MathF.Min(layer.Height - cropY, 1 + MathF.Ceiling(cropRect.Height * layer.Height));
 
                     roi = new RectInt32(cropX, cropY, cropWidth, cropHeight);
                 }
