@@ -60,7 +60,7 @@ namespace GmicEffectPlugin
             }
         }
 
-        public GmicEffect() : base(StaticName, StaticImage, "Advanced", new BitmapEffectOptions { Flags = EffectFlags.Configurable })
+        public GmicEffect() : base(StaticName, StaticImage, "Advanced", new BitmapEffectOptions { IsConfigurable = true })
         {
             repeatEffect = true;
         }
@@ -241,11 +241,15 @@ namespace GmicEffectPlugin
             base.OnSetToken(token);
         }
 
-        protected override void OnRender(RegionPtr<ColorBgra32> dst, Point2Int32 renderOffset)
+        protected override void OnRender(IBitmapEffectOutput bitmapEffectOutput)
         {
             if (outputBitmap != null)
             {
-                outputBitmap.CopyPixels(dst, renderOffset);
+                using (IBitmapLock<ColorBgra32> src = outputBitmap.Lock(bitmapEffectOutput.OutputRect, BitmapLockOptions.Read))
+                using (IBitmapLock<ColorBgra32> dst = bitmapEffectOutput.LockBgra32())
+                {
+                    src.AsRegionPtr().CopyTo(dst.AsRegionPtr());
+                }
             }
         }
     }
