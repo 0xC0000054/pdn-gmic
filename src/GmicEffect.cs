@@ -245,7 +245,7 @@ namespace GmicEffectPlugin
         {
             if (outputBitmap != null)
             {
-                using (IBitmapLock<ColorBgra32> src = outputBitmap.Lock(bitmapEffectOutput.OutputRect, BitmapLockOptions.Read))
+                using (IBitmapLock<ColorBgra32> src = outputBitmap.Lock(bitmapEffectOutput.Bounds, BitmapLockOptions.Read))
                 using (IBitmapLock<ColorBgra32> dst = bitmapEffectOutput.LockBgra32())
                 {
                     src.AsRegionPtr().CopyTo(dst.AsRegionPtr());
