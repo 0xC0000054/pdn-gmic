@@ -53,7 +53,7 @@ namespace GmicEffectPlugin
         private readonly SendOrPostCallback outputImageCallback;
         private readonly IArrayPoolService arrayPoolService;
         private readonly IBitmapEffectEnvironment effectEnvironment;
-        private readonly SizeInt32 canvasSize;
+        private readonly SizeInt32 documentSize;
 #pragma warning restore IDE0032 // Use auto property
 
         private static readonly RectangleF WholeImageCropRect = new(0.0f, 0.0f, 1.0f, 1.0f);
@@ -95,7 +95,7 @@ namespace GmicEffectPlugin
             fullPipeName = @"\\.\pipe\" + pipeName;
             this.synchronizationContext = synchronizationContext;
             this.effectEnvironment = effectEnvironment;
-            canvasSize = effectEnvironment.CanvasSize;
+            documentSize = effectEnvironment.Document.Size;
             outputImageCallback = new SendOrPostCallback(OutputImageChangedCallback);
             arrayPoolService = services.GetService<IArrayPoolService>();
             layers = new List<GmicLayer>();
@@ -384,8 +384,8 @@ namespace GmicEffectPlugin
                 case InputMode.AllVisibleLayers:
                 case InputMode.AllHiddenLayers:
                     // Paint.NET layers are always the same size as the parent document.
-                    width = canvasSize.Width;
-                    height = canvasSize.Height;
+                    width = documentSize.Width;
+                    height = documentSize.Height;
                     break;
                 default:
                     throw new InvalidOperationException("Unsupported InputMode: " + inputMode.ToString());

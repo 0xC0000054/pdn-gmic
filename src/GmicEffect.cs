@@ -98,7 +98,7 @@ namespace GmicEffectPlugin
         {
             if (File.Exists(GmicConfigDialog.GmicPath))
             {
-                if (GmicLayerUtil.IsTooLargeForX86<ColorBgra32>(Environment.CanvasSize))
+                if (GmicLayerUtil.IsTooLargeForX86<ColorBgra32>(Environment.Document.Size))
                 {
                     ShowErrorMessage(Resources.ImageTooLargeForX86);
                     return;
@@ -159,7 +159,7 @@ namespace GmicEffectPlugin
                                     {
                                         IBitmap<ColorBgra32> output = outputImages[0];
 
-                                        if (output.Size == Environment.CanvasSize)
+                                        if (output.Size == Environment.Document.Size)
                                         {
                                             outputBitmap ??= Environment.ImagingFactory.CreateBitmap<ColorBgra32>(output.Size);
                                             using (IBitmapLock<ColorBgra32> bitmapLock = outputBitmap.Lock(BitmapLockOptions.Write))
