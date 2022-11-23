@@ -401,7 +401,7 @@ namespace GmicEffectPlugin
             const int MaxStackAllocBufferSize = 128;
 
             Span<byte> replySizeBuffer = stackalloc byte[sizeof(int)];
-            server.ProperRead(replySizeBuffer);
+            server.ReadExactly(replySizeBuffer);
 
             int messageLength = BinaryPrimitives.ReadInt32LittleEndian(replySizeBuffer);
             IArrayPoolBuffer<byte> bufferFromPool = null;
@@ -418,7 +418,7 @@ namespace GmicEffectPlugin
 
                 Span<byte> messageBytes = buffer.Slice(0, messageLength);
 
-                server.ProperRead(messageBytes);
+                server.ReadExactly(messageBytes);
 
                 return DecodeMessageBuffer(messageBytes);
             }
