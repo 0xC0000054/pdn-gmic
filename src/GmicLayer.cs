@@ -72,11 +72,14 @@ namespace GmicEffectPlugin
 
         public bool Visible { get; }
 
-        public IBitmap<ColorBgra32> ToBitmap(RectInt32 roi)
+        public IBitmapSource<ColorBgra32> BitmapSource
         {
-            VerifyNotDisposed();
+            get
+            {
+                VerifyNotDisposed();
 
-            return bitmapSource.ToBitmap(roi);
+                return bitmapSource;
+            }
         }
 
         protected override void Dispose(bool disposing)
