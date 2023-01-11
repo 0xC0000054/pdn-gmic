@@ -584,13 +584,9 @@ namespace GmicEffectPlugin
                     {
                         accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref destination);
 
-                        using (IBitmap<ColorBgra32> bitmap = layer.ToBitmap(roi))
-                        using (IBitmapLock<ColorBgra32> bitmapLock = bitmap.Lock(BitmapLockOptions.Read))
-                        {
-                            RegionPtr<ColorBgra32> dst = new((ColorBgra32*)destination, bitmap.Size, destinationStride);
+                        RegionPtr<ColorBgra32> dst = new((ColorBgra32*)destination, roi.Size, destinationStride);
 
-                            bitmapLock.AsRegionPtr().CopyTo(dst);
-                        }
+                        layer.BitmapSource.CopyPixels(dst, roi.Location);
                     }
                     finally
                     {

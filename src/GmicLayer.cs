@@ -66,18 +66,21 @@ namespace GmicEffectPlugin
 
         public RectInt32 Bounds => new(0, 0, Width, Height);
 
+        public IBitmapSource<ColorBgra32> BitmapSource
+        {
+            get
+            {
+                VerifyNotDisposed();
+
+                return bitmapSource;
+            }
+        }
+
         public int Width { get; }
 
         public int Height { get; }
 
         public bool Visible { get; }
-
-        public IBitmap<ColorBgra32> ToBitmap(RectInt32 roi)
-        {
-            VerifyNotDisposed();
-
-            return bitmapSource.ToBitmap(roi);
-        }
 
         protected override void Dispose(bool disposing)
         {
