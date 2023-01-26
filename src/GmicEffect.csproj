@@ -73,6 +73,17 @@
       <HintPath>D:\Program Files\paint.net\PaintDotNet.Windows.Core.dll</HintPath>
     </Reference>
   </ItemGroup>
+    <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
   <Target Name="PreBuild" AfterTargets="PreBuildEvent">
     <Exec Command="del &quot;D:\Program Files\paint.net\$(TargetName).pdb&quot;" />
   </Target>
