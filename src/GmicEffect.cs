@@ -43,6 +43,7 @@ namespace GmicEffectPlugin
     {
         private bool repeatEffect;
         private IBitmap<ColorBgra32> outputBitmap;
+        private IEffectInputBitmap<ColorBgra32> effectInput;
 
         internal static string StaticName
         {
@@ -236,12 +237,16 @@ namespace GmicEffectPlugin
                         token.OutputBitmap.CopyPixels(bitmapLock);
                     }
                 }
+                else
+                {
+                    effectInput ??= Environment.GetSourceBitmapBgra32();
+                }
             }
 
             base.OnSetToken(token);
         }
 
-        protected override void OnRender(IBitmapEffectOutput bitmapEffectOutput)
+        protected override unsafe void OnRender(IBitmapEffectOutput bitmapEffectOutput)
         {
             if (outputBitmap != null)
             {
@@ -249,6 +254,13 @@ namespace GmicEffectPlugin
                 using (IBitmapLock<ColorBgra32> dst = bitmapEffectOutput.LockBgra32())
                 {
                     src.AsRegionPtr().CopyTo(dst.AsRegionPtr());
+                }
+            }
+            else
+            {
+                using (IBitmapLock<ColorBgra32> dst = bitmapEffectOutput.LockBgra32())
+                {
+                    effectInput.CopyPixels(dst.Buffer, dst.BufferStride, dst.BufferSize, bitmapEffectOutput.Bounds);
                 }
             }
         }
