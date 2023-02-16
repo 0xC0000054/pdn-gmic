@@ -19,6 +19,7 @@
 *
 */
 
+using CommunityToolkit.HighPerformance.Buffers;
 using PaintDotNet;
 using PaintDotNet.AppModel;
 using PaintDotNet.Effects;
@@ -441,13 +442,13 @@ namespace GmicEffectPlugin
                         // Empty strings are skipped.
                         if (parameter.Length > 0)
                         {
-                            messageParameters.Add(Encoding.UTF8.GetString(parameter));
+                            messageParameters.Add(StringPool.Shared.GetOrAdd(parameter, Encoding.UTF8));
                         }
                     }
                 }
                 else
                 {
-                    messageParameters.Add(Encoding.UTF8.GetString(bytes));
+                    messageParameters.Add(StringPool.Shared.GetOrAdd(bytes, Encoding.UTF8));
                 }
 
                 return messageParameters;

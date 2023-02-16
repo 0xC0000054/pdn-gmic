@@ -339,3 +339,6 @@ ASALocalRun/
 
 # Debugger launch settings
 **/launchSettings.json
+
+# Fody - auto-generated XML schema
+FodyWeavers.xsd
