@@ -165,81 +165,6 @@ namespace GmicEffectPlugin.Interop
             void GetSelectedItems([MarshalAs(UnmanagedType.Interface)] out IShellItemArray ppsai);
         }
 
-        [ComImport(), Guid(NativeConstants.IID_IFileSaveDialog), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        internal interface IFileSaveDialog : IFileDialog
-        {
-            // Defined on IModalWindow - repeated here due to requirements of COM interop layer
-            // --------------------------------------------------------------------------------
-            [PreserveSig]
-            new int Show([In] IntPtr parent);
-
-            // Defined on IFileDialog - repeated here due to requirements of COM interop layer
-
-            new void SetFileTypes(
-                [In] uint cFileTypes,
-                [In, MarshalAs(UnmanagedType.LPArray)] NativeStructs.COMDLG_FILTERSPEC[] rgFilterSpec
-                );
-
-            new void SetFileTypeIndex([In] uint iFileType);
-
-            new void GetFileTypeIndex(out uint piFileType);
-
-            new void Advise([In, MarshalAs(UnmanagedType.Interface)] IFileDialogEvents pfde, out uint pdwCookie);
-
-            new void Unadvise([In] uint dwCookie);
-
-            new void SetOptions([In] NativeEnums.FOS fos);
-
-            new void GetOptions(out NativeEnums.FOS pfos);
-
-            new void SetDefaultFolder([In, MarshalAs(UnmanagedType.Interface)] IShellItem psi);
-
-            new void SetFolder([In, MarshalAs(UnmanagedType.Interface)] IShellItem psi);
-
-            new void GetFolder([MarshalAs(UnmanagedType.Interface)] out IShellItem ppsi);
-
-            new void GetCurrentSelection([MarshalAs(UnmanagedType.Interface)] out IShellItem ppsi);
-
-            new void SetFileName([In, MarshalAs(UnmanagedType.LPWStr)] string pszName);
-
-            new void GetFileName([MarshalAs(UnmanagedType.LPWStr)] out string pszName);
-
-            new void SetTitle([In, MarshalAs(UnmanagedType.LPWStr)] string pszTitle);
-
-            new void SetOkButtonLabel([In, MarshalAs(UnmanagedType.LPWStr)] string pszText);
-
-            new void SetFileNameLabel([In, MarshalAs(UnmanagedType.LPWStr)] string pszLabel);
-
-            new void GetResult([MarshalAs(UnmanagedType.Interface)] out IShellItem ppsi);
-
-            new void AddPlace([In, MarshalAs(UnmanagedType.Interface)] IShellItem psi, NativeEnums.FDAP fdap);
-
-            new void SetDefaultExtension([In, MarshalAs(UnmanagedType.LPWStr)] string pszDefaultExtension);
-
-            new void Close([MarshalAs(UnmanagedType.Error)] int hr);
-
-            new void SetClientGuid([In] ref Guid guid);
-
-            new void ClearClientData();
-
-            new void SetFilter([MarshalAs(UnmanagedType.Interface)] IntPtr pFilter);
-
-            // Defined by IFileSaveDialog interface
-            // -----------------------------------------------------------------------------------
-            void SetSaveAsItem([In, MarshalAs(UnmanagedType.Interface)] IShellItem psi);
-
-            void SetProperties([In, MarshalAs(UnmanagedType.Interface)] IntPtr pStore);
-
-            void SetCollectedProperties([In, MarshalAs(UnmanagedType.Interface)] IntPtr pList, [In] int fAppendDefault);
-
-            void GetProperties([MarshalAs(UnmanagedType.Interface)] out IntPtr ppStore);
-
-            void ApplyProperties([In, MarshalAs(UnmanagedType.Interface)] IShellItem psi,
-                                 [In, MarshalAs(UnmanagedType.Interface)] IntPtr pStore,
-                                 [In, ComAliasName("ShellObjects.wireHWND")] ref IntPtr hwnd,
-                                 [In, MarshalAs(UnmanagedType.Interface)] IntPtr pSink);
-        }
-
         [ComImport(), Guid(NativeConstants.IID_IFileDialogEvents), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         internal interface IFileDialogEvents
         {
@@ -396,17 +321,6 @@ namespace GmicEffectPlugin.Interop
         {
         }
 
-
-        [ComImport]
-        [Guid(NativeConstants.IID_IFileSaveDialog)]
-        [CoClass(typeof(FileSaveDialogRCW))]
-#pragma warning disable IDE1006 // Naming Styles
-        internal interface NativeFileSaveDialog : IFileSaveDialog
-#pragma warning restore IDE1006 // Naming Styles
-        {
-        }
-
-
         // ---------------------------------------------------
         // .NET classes representing runtime callable wrappers
 
@@ -415,14 +329,6 @@ namespace GmicEffectPlugin.Interop
         [TypeLibType(TypeLibTypeFlags.FCanCreate)]
         [Guid(NativeConstants.CLSID_FileOpenDialog)]
         internal class FileOpenDialogRCW
-        {
-        }
-
-        [ComImport]
-        [ClassInterface(ClassInterfaceType.None)]
-        [TypeLibType(TypeLibTypeFlags.FCanCreate)]
-        [Guid(NativeConstants.CLSID_FileSaveDialog)]
-        internal class FileSaveDialogRCW
         {
         }
     }

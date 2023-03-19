@@ -19,6 +19,7 @@
 *
 */
 
+using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 
@@ -32,19 +33,23 @@ namespace GmicEffectPlugin
     [Description("Prompts the user to save a file using a dialog appropriate for the current platform.")]
     internal sealed class PlatformFileSaveDialog : PlatformFileDialog
     {
-        private VistaFileSaveDialog vistaFileSaveDialog;
-        private SaveFileDialog classicFileSaveDialog;
+        private SaveFileDialog saveFileDialog;
         private string title;
         private string fileName;
         private string filter;
+
+        private static readonly Guid ClientGuid = new("C5778DA9-6108-45FA-AA98-1087689B93FC");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PlatformFileSaveDialog"/> class.
         /// </summary>
         public PlatformFileSaveDialog()
         {
-            vistaFileSaveDialog = null;
-            classicFileSaveDialog = null;
+            saveFileDialog = new SaveFileDialog
+            {
+                AddToRecent = false,
+                ClientGuid = ClientGuid
+            };
             title = null;
             fileName = null;
             filter = null;
@@ -117,38 +122,14 @@ namespace GmicEffectPlugin
 
         protected override DialogResult RunDialog(IWin32Window owner)
         {
-            DialogResult result;
+            saveFileDialog.Title = title;
+            saveFileDialog.FileName = fileName;
+            saveFileDialog.Filter = filter;
+            saveFileDialog.FilterIndex = FilterIndex;
 
-            if (VistaDialogSupported())
-            {
-                if (vistaFileSaveDialog == null)
-                {
-                    vistaFileSaveDialog = new VistaFileSaveDialog();
-                }
-                vistaFileSaveDialog.Title = title;
-                vistaFileSaveDialog.FileName = fileName;
-                vistaFileSaveDialog.Filter = filter;
-                vistaFileSaveDialog.FilterIndex = FilterIndex;
+            DialogResult result = saveFileDialog.ShowDialog(owner);
 
-                result = vistaFileSaveDialog.ShowDialog(owner);
-
-                fileName = vistaFileSaveDialog.FileName;
-            }
-            else
-            {
-                if (classicFileSaveDialog == null)
-                {
-                    classicFileSaveDialog = new SaveFileDialog();
-                }
-                classicFileSaveDialog.Title = title;
-                classicFileSaveDialog.FileName = fileName;
-                classicFileSaveDialog.Filter = filter;
-                classicFileSaveDialog.FilterIndex = FilterIndex;
-
-                result = classicFileSaveDialog.ShowDialog(owner);
-
-                fileName = classicFileSaveDialog.FileName;
-            }
+            fileName = saveFileDialog.FileName;
 
             return result;
         }
@@ -157,15 +138,10 @@ namespace GmicEffectPlugin
         {
             if (disposing)
             {
-                if (vistaFileSaveDialog != null)
+                if (saveFileDialog != null)
                 {
-                    vistaFileSaveDialog.Dispose();
-                    vistaFileSaveDialog = null;
-                }
-                if (classicFileSaveDialog != null)
-                {
-                    classicFileSaveDialog.Dispose();
-                    classicFileSaveDialog = null;
+                    saveFileDialog.Dispose();
+                    saveFileDialog = null;
                 }
             }
             base.Dispose(disposing);
