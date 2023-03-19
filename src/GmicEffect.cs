@@ -226,6 +226,11 @@ namespace GmicEffectPlugin
             if (repeatEffect)
             {
                 RunGmicRepeatEffect(token.OutputFolder);
+
+                if (outputBitmap is null)
+                {
+                    effectInput = Environment.GetSourceBitmapBgra32();
+                }
             }
             else
             {
