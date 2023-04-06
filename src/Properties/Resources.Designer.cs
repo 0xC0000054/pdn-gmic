@@ -70,6 +70,15 @@ namespace GmicEffectPlugin.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to G&apos;MIC-Qt will open in a separate window..
+        /// </summary>
+        internal static string ConfigDialogInfoText {
+            get {
+                return ResourceManager.GetString("ConfigDialogInfoText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to gmic_paintdotnet_qt.exe must be in the gmic subfolder of Effects..
         /// </summary>
         internal static string GmicNotFound {

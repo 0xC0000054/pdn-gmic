@@ -120,6 +120,9 @@
   <data name="ClassicFolderBrowserDescription" xml:space="preserve">
     <value>Select a folder to place the multiple G'MIC output images:</value>
   </data>
+  <data name="ConfigDialogInfoText" xml:space="preserve">
+    <value>G'MIC-Qt will open in a separate window.</value>
+  </data>
   <data name="GmicNotFound" xml:space="preserve">
     <value>gmic_paintdotnet_qt.exe must be in the gmic subfolder of Effects.</value>
   </data>

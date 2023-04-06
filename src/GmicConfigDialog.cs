@@ -49,6 +49,7 @@ namespace GmicEffectPlugin
         private string outputFolder;
         private PlatformFolderBrowserDialog folderBrowserDialog;
         private PlatformFileSaveDialog resizedImageSaveDialog;
+        private Label infoLabel;
         private readonly IImagingFactory imagingFactory;
 
         private readonly GmicDialogSynchronizationContext dialogSynchronizationContext;
@@ -97,8 +98,6 @@ namespace GmicEffectPlugin
         protected override void OnLoaded()
         {
             base.OnLoaded();
-
-            Opacity = 0;
 
             if (File.Exists(GmicPath))
             {
@@ -368,8 +367,10 @@ namespace GmicEffectPlugin
 
         private void InitializeComponent()
         {
+
             this.folderBrowserDialog = new GmicEffectPlugin.PlatformFolderBrowserDialog();
             this.resizedImageSaveDialog = new GmicEffectPlugin.PlatformFileSaveDialog();
+            this.infoLabel = new Label();
             this.SuspendLayout();
             //
             // folderBrowserDialog
@@ -382,14 +383,41 @@ namespace GmicEffectPlugin
             this.resizedImageSaveDialog.Filter = Resources.ResizedImageSaveDialogFilter;
             this.resizedImageSaveDialog.Title = Resources.ResizedImageSaveDialogTitle;
             //
+            // infoLabel
+            //
+            this.infoLabel.Name = "infoLabel";
+            this.infoLabel.Text = Resources.ConfigDialogInfoText;
+            //
             // GmicConfigDialog
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
-            this.ClientSize = new System.Drawing.Size(282, 253);
+            this.AutoScaleMode = AutoScaleMode.Dpi;
+            this.ClientSize = new System.Drawing.Size(250, 50);
+            this.ControlBox = false;
             this.Location = new System.Drawing.Point(0, 0);
             this.Name = "GmicConfigDialog";
+            this.Controls.Add(this.infoLabel);
             this.ResumeLayout(false);
+        }
 
+        protected override void OnLayout(LayoutEventArgs levent)
+        {
+            int hMargin = LogicalToDeviceUnits(8);
+            int vMargin = LogicalToDeviceUnits(8);
+
+            infoLabel.Location = new System.Drawing.Point(hMargin, vMargin);
+            infoLabel.Size = TextRenderer.MeasureText(infoLabel.Text,
+                                                      infoLabel.Font,
+                                                      new System.Drawing.Size(ClientSize.Width - infoLabel.Left - hMargin, int.MaxValue),
+                                                      TextFormatFlags.WordBreak);
+            infoLabel.PerformLayout();
+
+            int clientWidth = infoLabel.Right + hMargin;
+            int clientHeight = infoLabel.Bottom + vMargin;
+
+            ClientSize = new System.Drawing.Size(clientWidth, clientHeight);
+
+            base.OnLayout(levent);
         }
 
         private sealed class GmicDialogSynchronizationContext : SynchronizationContext
