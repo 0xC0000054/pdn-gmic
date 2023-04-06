@@ -367,37 +367,36 @@ namespace GmicEffectPlugin
 
         private void InitializeComponent()
         {
-
-            this.folderBrowserDialog = new GmicEffectPlugin.PlatformFolderBrowserDialog();
-            this.resizedImageSaveDialog = new GmicEffectPlugin.PlatformFileSaveDialog();
-            this.infoLabel = new Label();
-            this.SuspendLayout();
+            folderBrowserDialog = new GmicEffectPlugin.PlatformFolderBrowserDialog();
+            resizedImageSaveDialog = new GmicEffectPlugin.PlatformFileSaveDialog();
+            infoLabel = new Label();
+            SuspendLayout();
             //
             // folderBrowserDialog
             //
-            this.folderBrowserDialog.ClassicFolderBrowserDescription = Resources.ClassicFolderBrowserDescription;
-            this.folderBrowserDialog.VistaFolderBrowserTitle = Resources.VistaFolderBrowserTitle;
+            folderBrowserDialog.ClassicFolderBrowserDescription = Resources.ClassicFolderBrowserDescription;
+            folderBrowserDialog.VistaFolderBrowserTitle = Resources.VistaFolderBrowserTitle;
             //
             // resizedImageSaveDialog
             //
-            this.resizedImageSaveDialog.Filter = Resources.ResizedImageSaveDialogFilter;
-            this.resizedImageSaveDialog.Title = Resources.ResizedImageSaveDialogTitle;
+            resizedImageSaveDialog.Filter = Resources.ResizedImageSaveDialogFilter;
+            resizedImageSaveDialog.Title = Resources.ResizedImageSaveDialogTitle;
             //
             // infoLabel
             //
-            this.infoLabel.Name = "infoLabel";
-            this.infoLabel.Text = Resources.ConfigDialogInfoText;
+            infoLabel.Name = "infoLabel";
+            infoLabel.Text = Resources.ConfigDialogInfoText;
             //
             // GmicConfigDialog
             //
-            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
-            this.AutoScaleMode = AutoScaleMode.Dpi;
-            this.ClientSize = new System.Drawing.Size(250, 50);
-            this.ControlBox = false;
-            this.Location = new System.Drawing.Point(0, 0);
-            this.Name = "GmicConfigDialog";
-            this.Controls.Add(this.infoLabel);
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            AutoScaleMode = AutoScaleMode.Dpi;
+            ClientSize = new System.Drawing.Size(250, 50);
+            ControlBox = false;
+            Location = new System.Drawing.Point(0, 0);
+            Name = "GmicConfigDialog";
+            Controls.Add(infoLabel);
+            ResumeLayout(false);
         }
 
         protected override void OnLayout(LayoutEventArgs levent)
