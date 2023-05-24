@@ -36,7 +36,7 @@ namespace GmicEffectPlugin
 
         public ReadOnlySpan<T> Current { get; private set; }
 
-        public SpanSplitEnumerator<T> GetEnumerator() => this;
+        public readonly SpanSplitEnumerator<T> GetEnumerator() => this;
 
         public bool MoveNext()
         {
