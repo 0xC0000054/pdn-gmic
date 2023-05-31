@@ -61,7 +61,7 @@ namespace GmicEffectPlugin
             }
         }
 
-        public GmicEffect() : base(StaticName, StaticImage, "Advanced", new BitmapEffectOptions { IsConfigurable = true })
+        public GmicEffect() : base(StaticName, StaticImage, "Advanced", BitmapEffectOptions.Create() with { IsConfigurable = true })
         {
             repeatEffect = true;
         }
