@@ -11,6 +11,7 @@ A [Paint.NET](https://www.getpaint.net) Effect that provides integration with [G
   --------|----------
   Classic | C:\Program Files\Paint.NET\Effects    
   Microsoft Store | Documents\paint.net App Files\Effects
+  Portable | <Paint.NET folder>\Effects
 
 3. Restart Paint.NET.
 4. The plug-in will now be available as the G'MIC-Qt menu item in the Advanced category of the Paint.NET Effects menu.
