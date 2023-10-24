@@ -21,11 +21,11 @@
 
 using CommunityToolkit.HighPerformance.Buffers;
 using PaintDotNet;
-using PaintDotNet.AppModel;
 using PaintDotNet.Effects;
 using PaintDotNet.Imaging;
 using PaintDotNet.Rendering;
 using System;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -51,7 +51,6 @@ namespace GmicEffectPlugin
         private readonly string pipeName;
         private readonly SynchronizationContext? synchronizationContext;
         private readonly SendOrPostCallback outputImageCallback;
-        private readonly IArrayPoolService arrayPoolService;
         private readonly IBitmapEffectEnvironment effectEnvironment;
         private readonly SizeInt32 documentSize;
         private readonly StringBuilder replyStringBuilder;
@@ -98,7 +97,6 @@ namespace GmicEffectPlugin
             this.effectEnvironment = effectEnvironment;
             documentSize = effectEnvironment.Document.Size;
             outputImageCallback = new SendOrPostCallback(OutputImageChangedCallback);
-            arrayPoolService = services.GetService<IArrayPoolService>()!;
             layers = new List<GmicLayer>();
             memoryMappedFiles = new List<MemoryMappedFile>();
             replyStringBuilder = new StringBuilder(256);
@@ -408,7 +406,7 @@ namespace GmicEffectPlugin
             server!.ReadExactly(replySizeBuffer);
 
             int messageLength = BinaryPrimitives.ReadInt32LittleEndian(replySizeBuffer);
-            IArrayPoolBuffer<byte>? bufferFromPool = null;
+            byte[]? bufferFromPool = null;
 
             try
             {
@@ -416,8 +414,8 @@ namespace GmicEffectPlugin
 
                 if (messageLength > MaxStackAllocBufferSize)
                 {
-                    bufferFromPool = arrayPoolService.Rent<byte>(messageLength);
-                    buffer = bufferFromPool.AsSpan();
+                    bufferFromPool = ArrayPool<byte>.Shared.Rent(messageLength);
+                    buffer = bufferFromPool;
                 }
 
                 Span<byte> messageBytes = buffer.Slice(0, messageLength);
@@ -428,7 +426,10 @@ namespace GmicEffectPlugin
             }
             finally
             {
-                bufferFromPool?.Dispose();
+                if (bufferFromPool != null)
+                {
+                    ArrayPool<byte>.Shared.Return(bufferFromPool);
+                }
             }
 
             static List<string> DecodeMessageBuffer(ReadOnlySpan<byte> bytes)
@@ -759,7 +760,7 @@ namespace GmicEffectPlugin
 
             const int MaxStackAllocBufferSize = 256;
 
-            IArrayPoolBuffer<byte>? bufferFromPool = null;
+            byte[]? bufferFromPool = null;
 
             try
             {
@@ -770,8 +771,8 @@ namespace GmicEffectPlugin
 
                 if (totalMessageLength > MaxStackAllocBufferSize)
                 {
-                    bufferFromPool = arrayPoolService.Rent<byte>(totalMessageLength);
-                    buffer = bufferFromPool.AsSpan();
+                    bufferFromPool = ArrayPool<byte>.Shared.Rent(totalMessageLength);
+                    buffer = bufferFromPool;
                 }
 
                 BinaryPrimitives.WriteInt32LittleEndian(buffer, messageLength);
@@ -783,7 +784,10 @@ namespace GmicEffectPlugin
             }
             finally
             {
-                bufferFromPool?.Dispose();
+                if (bufferFromPool != null)
+                {
+                    ArrayPool<byte>.Shared.Return(bufferFromPool);
+                }
             }
         }
     }
