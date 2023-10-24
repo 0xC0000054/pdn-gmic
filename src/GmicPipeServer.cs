@@ -49,7 +49,6 @@ namespace GmicEffectPlugin
         private bool disposed;
 
         private readonly string pipeName;
-        private readonly string fullPipeName;
         private readonly SynchronizationContext synchronizationContext;
         private readonly SendOrPostCallback outputImageCallback;
         private readonly IArrayPoolService arrayPoolService;
@@ -93,7 +92,7 @@ namespace GmicEffectPlugin
             ArgumentNullException.ThrowIfNull(effectEnvironment);
 
             pipeName = "PDN_GMIC" + Guid.NewGuid().ToString();
-            fullPipeName = @"\\.\pipe\" + pipeName;
+            FullPipeName = @"\\.\pipe\" + pipeName;
             this.synchronizationContext = synchronizationContext;
             this.effectEnvironment = effectEnvironment;
             documentSize = effectEnvironment.Document.Size;
@@ -104,7 +103,7 @@ namespace GmicEffectPlugin
             disposed = false;
         }
 
-        public string FullPipeName => fullPipeName;
+        public string FullPipeName { get; }
 
         public string GmicCommandName { get; private set; }
 
