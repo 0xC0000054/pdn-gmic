@@ -46,7 +46,7 @@ namespace GmicEffectPlugin
         /// Any object that implements <see cref="IWin32Window"/> that represents the top-level window that will own the modal dialog box.
         /// </param>
         /// <returns>One of the <see cref="DialogResult"/> values.</returns>
-        public DialogResult ShowDialog(IWin32Window owner)
+        public DialogResult ShowDialog(IWin32Window? owner)
         {
             DialogResult result = DialogResult.Cancel;
 
@@ -56,9 +56,9 @@ namespace GmicEffectPlugin
             }
             else
             {
-                Thread staThread = new(delegate (object state)
+                Thread staThread = new(delegate (object? state)
                 {
-                    result = RunDialog((IWin32Window)state);
+                    result = RunDialog((IWin32Window?)state);
                 });
                 staThread.SetApartmentState(ApartmentState.STA);
 
@@ -69,7 +69,7 @@ namespace GmicEffectPlugin
             return result;
         }
 
-        protected abstract DialogResult RunDialog(IWin32Window owner);
+        protected abstract DialogResult RunDialog(IWin32Window? owner);
 
         protected static bool VistaDialogSupported()
         {

@@ -33,7 +33,7 @@ namespace GmicEffectPlugin
     [Description("Prompts the user to save a file using a dialog appropriate for the current platform.")]
     internal sealed class PlatformFileSaveDialog : PlatformFileDialog
     {
-        private SaveFileDialog saveFileDialog;
+        private readonly SaveFileDialog saveFileDialog;
         private string title;
         private string fileName;
         private string filter;
@@ -50,9 +50,9 @@ namespace GmicEffectPlugin
                 AddToRecent = false,
                 ClientGuid = ClientGuid
             };
-            title = null;
-            fileName = null;
-            filter = null;
+            title = string.Empty;
+            fileName = string.Empty;
+            filter = string.Empty;
             FilterIndex = 1;
         }
 
@@ -120,7 +120,7 @@ namespace GmicEffectPlugin
             set => title = value;
         }
 
-        protected override DialogResult RunDialog(IWin32Window owner)
+        protected override DialogResult RunDialog(IWin32Window? owner)
         {
             saveFileDialog.Title = title;
             saveFileDialog.FileName = fileName;
@@ -138,11 +138,7 @@ namespace GmicEffectPlugin
         {
             if (disposing)
             {
-                if (saveFileDialog != null)
-                {
-                    saveFileDialog.Dispose();
-                    saveFileDialog = null;
-                }
+                saveFileDialog?.Dispose();
             }
             base.Dispose(disposing);
         }

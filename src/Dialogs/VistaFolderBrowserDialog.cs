@@ -22,6 +22,7 @@
 using GmicEffectPlugin.Interop;
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
@@ -45,14 +46,17 @@ namespace GmicEffectPlugin
         /// </summary>
         public VistaFolderBrowserDialog()
         {
-            Reset();
+            title = string.Empty;
+            defaultFolder = string.Empty;
+            selectedPath = string.Empty;
+            AddToRecentDocuments = false;
         }
 
         public override void Reset()
         {
-            title = null;
-            defaultFolder = null;
-            selectedPath = null;
+            title = string.Empty;
+            defaultFolder = string.Empty;
+            selectedPath = string.Empty;
             AddToRecentDocuments = false;
         }
 
@@ -134,7 +138,7 @@ namespace GmicEffectPlugin
         [Localizable(false)]
         public bool AddToRecentDocuments { get; set; }
 
-        private static bool CreateShellItemFromPath(string path, out NativeInterfaces.IShellItem item)
+        private static bool CreateShellItemFromPath(string path, [NotNullWhen(true)] out NativeInterfaces.IShellItem? item)
         {
             Guid riid = new(NativeConstants.IID_IShellItem);
             if (SafeNativeMethods.SHCreateItemFromParsingName(path, IntPtr.Zero, ref riid, out item) != NativeConstants.S_OK)
@@ -190,7 +194,7 @@ namespace GmicEffectPlugin
 
             if (!string.IsNullOrEmpty(defaultFolder))
             {
-                NativeInterfaces.IShellItem defaultFolderShellItem = null;
+                NativeInterfaces.IShellItem? defaultFolderShellItem = null;
 
                 try
                 {
@@ -223,7 +227,7 @@ namespace GmicEffectPlugin
 
             bool result = false;
 
-            NativeInterfaces.IFileOpenDialog dialog = null;
+            NativeInterfaces.IFileOpenDialog? dialog = null;
 
             try
             {
@@ -260,7 +264,7 @@ namespace GmicEffectPlugin
         {
             bool result = false;
 
-            NativeInterfaces.IShellItem resultShellItem = null;
+            NativeInterfaces.IShellItem? resultShellItem = null;
             try
             {
                 pfd.GetResult(out resultShellItem);

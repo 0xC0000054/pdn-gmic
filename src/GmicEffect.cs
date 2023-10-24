@@ -42,8 +42,8 @@ namespace GmicEffectPlugin
     public sealed class GmicEffect : BitmapEffect<GmicConfigToken>
     {
         private bool repeatEffect;
-        private IBitmap<ColorBgra32> outputBitmap;
-        private IEffectInputBitmap<ColorBgra32> effectInput;
+        private IBitmap<ColorBgra32>? outputBitmap;
+        private IEffectInputBitmap<ColorBgra32>? effectInput;
 
         internal static string StaticName
         {
@@ -87,12 +87,12 @@ namespace GmicEffectPlugin
 
         private void ShowErrorMessage(Exception exception)
         {
-            Services.GetService<IExceptionDialogService>().ShowErrorDialog(null, exception.Message, exception);
+            Services.GetService<IExceptionDialogService>()!.ShowErrorDialog(null, exception.Message, exception);
         }
 
         private void ShowErrorMessage(string message)
         {
-            Services.GetService<IExceptionDialogService>().ShowErrorDialog(null, message, string.Empty);
+            Services.GetService<IExceptionDialogService>()!.ShowErrorDialog(null, message, string.Empty);
         }
 
         private void RunGmicRepeatEffect(string lastOutputFolder)
@@ -122,7 +122,7 @@ namespace GmicEffectPlugin
 
                             if (process.ExitCode == GmicExitCode.Ok)
                             {
-                                OutputImageState state = server.OutputImageState;
+                                OutputImageState state = server.OutputImageState!;
 
                                 if (state.Error != null)
                                 {
@@ -130,7 +130,7 @@ namespace GmicEffectPlugin
                                 }
                                 else
                                 {
-                                    IReadOnlyList<IBitmap<ColorBgra32>> outputImages = state.OutputImages;
+                                    IReadOnlyList<IBitmap<ColorBgra32>> outputImages = state.OutputImages!;
                                     string gmicCommandName = server.GmicCommandName;
 
                                     if (outputImages.Count > 1)
@@ -173,7 +173,7 @@ namespace GmicEffectPlugin
                                             // Place the full image on the clipboard when the size does not match the Paint.NET layer
                                             // and prompt the user to save it.
                                             // The resized image will not be copied to the Paint.NET canvas.
-                                            Services.GetService<IClipboardService>().SetImage(output);
+                                            Services.GetService<IClipboardService>()!.SetImage(output);
 
                                             using (PlatformFileSaveDialog resizedImageSaveDialog = new())
                                             {
@@ -221,11 +221,11 @@ namespace GmicEffectPlugin
             }
         }
 
-        protected override void OnSetToken(GmicConfigToken token)
+        protected override void OnSetToken(GmicConfigToken? token)
         {
             if (repeatEffect)
             {
-                RunGmicRepeatEffect(token.OutputFolder);
+                RunGmicRepeatEffect(token!.OutputFolder);
 
                 if (outputBitmap is null)
                 {
@@ -234,7 +234,7 @@ namespace GmicEffectPlugin
             }
             else
             {
-                if (token.OutputBitmap != null)
+                if (token?.OutputBitmap != null)
                 {
                     outputBitmap ??= Environment.ImagingFactory.CreateBitmap<ColorBgra32>(token.OutputBitmap.Size);
                     using (IBitmapLock<ColorBgra32> bitmapLock = outputBitmap.Lock(BitmapLockOptions.Write))
@@ -265,7 +265,7 @@ namespace GmicEffectPlugin
             {
                 using (IBitmapLock<ColorBgra32> dst = bitmapEffectOutput.LockBgra32())
                 {
-                    effectInput.CopyPixels(dst.Buffer, dst.BufferStride, dst.BufferSize, bitmapEffectOutput.Bounds);
+                    effectInput!.CopyPixels(dst.Buffer, dst.BufferStride, dst.BufferSize, bitmapEffectOutput.Bounds);
                 }
             }
         }

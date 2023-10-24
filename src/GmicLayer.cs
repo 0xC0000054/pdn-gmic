@@ -29,7 +29,7 @@ namespace GmicEffectPlugin
 {
     internal sealed class GmicLayer : Disposable
     {
-        private IBitmapSource<ColorBgra32> bitmapSource;
+        private IBitmapSource<ColorBgra32>? bitmapSource;
 
         public GmicLayer(IEffectLayerInfo layerInfo)
         {
@@ -72,7 +72,7 @@ namespace GmicEffectPlugin
             {
                 VerifyNotDisposed();
 
-                return bitmapSource;
+                return bitmapSource!;
             }
         }
 

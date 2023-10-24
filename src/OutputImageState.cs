@@ -23,31 +23,44 @@ using PaintDotNet;
 using PaintDotNet.Imaging;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace GmicEffectPlugin
 {
     internal sealed class OutputImageState : Disposable
     {
-        public OutputImageState(Exception error, IReadOnlyList<IBitmap<ColorBgra32>> outputImages)
+        private IReadOnlyList<IBitmap<ColorBgra32>>? outputImages;
+
+        public OutputImageState(Exception? error, IReadOnlyList<IBitmap<ColorBgra32>>? outputImages)
         {
             Error = error;
-            OutputImages = outputImages;
+            this.outputImages = outputImages;
         }
 
-        public Exception Error { get; }
+        public Exception? Error { get; }
 
-        public IReadOnlyList<IBitmap<ColorBgra32>> OutputImages { get; private set; }
+        public IReadOnlyList<IBitmap<ColorBgra32>>? OutputImages
+        {
+            get
+            {
+                ObjectDisposedException.ThrowIf(IsDisposed, this);
+
+                return outputImages;
+            }
+        }
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing && OutputImages != null)
+            if (disposing)
             {
-                IReadOnlyList<IBitmap<ColorBgra32>> output = OutputImages;
-                OutputImages = null;
+                IReadOnlyList<IBitmap<ColorBgra32>>? output = Interlocked.Exchange(ref outputImages, null);
 
-                for (int i = 0; i < output.Count; i++)
+                if (output != null)
                 {
-                    output[i]?.Dispose();
+                    for (int i = 0; i < output.Count; i++)
+                    {
+                        output[i]?.Dispose();
+                    }
                 }
             }
 

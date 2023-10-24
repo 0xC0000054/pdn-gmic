@@ -28,7 +28,7 @@ namespace GmicEffectPlugin
     {
         public GmicConfigToken()
         {
-            OutputFolder = null;
+            OutputFolder = string.Empty;
             OutputBitmap = null;
         }
 
@@ -38,7 +38,7 @@ namespace GmicEffectPlugin
             set;
         }
 
-        public IBitmap<ColorBgra32> OutputBitmap
+        public IBitmap<ColorBgra32>? OutputBitmap
         {
             get;
             set;

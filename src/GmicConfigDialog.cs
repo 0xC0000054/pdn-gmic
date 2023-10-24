@@ -39,9 +39,9 @@ namespace GmicEffectPlugin
 {
     internal sealed class GmicConfigDialog : EffectConfigForm<GmicEffect, GmicConfigToken>
     {
-        private IBitmap<ColorBgra32> outputBitmap;
-        private Thread workerThread;
-        private GmicPipeServer server;
+        private IBitmap<ColorBgra32>? outputBitmap;
+        private Thread? workerThread;
+        private GmicPipeServer? server;
         private string outputFolder;
         private PlatformFolderBrowserDialog folderBrowserDialog;
         private PlatformFileSaveDialog resizedImageSaveDialog;
@@ -50,9 +50,12 @@ namespace GmicEffectPlugin
 
         private readonly GmicDialogSynchronizationContext dialogSynchronizationContext;
 
-        internal static readonly string GmicPath = Path.Combine(Path.GetDirectoryName(typeof(GmicEffect).Assembly.Location), "gmic\\gmic_paintdotnet_qt.exe");
+        internal static readonly string GmicPath = Path.Combine(Path.GetDirectoryName(typeof(GmicEffect).Assembly.Location)!, "gmic\\gmic_paintdotnet_qt.exe");
 
+        // The fields the compiler complains about are initialized in InitializeComponent.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public GmicConfigDialog(IServiceProvider effectServices, IBitmapEffectEnvironment effectEnvironment)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             InitializeComponent();
             Text = GmicEffect.StaticName;
@@ -123,7 +126,7 @@ namespace GmicEffectPlugin
 
             try
             {
-                server.Start();
+                server!.Start();
 
                 string arguments = string.Format(CultureInfo.InvariantCulture, ".PDN {0}", server.FullPipeName);
 
@@ -166,7 +169,7 @@ namespace GmicEffectPlugin
 
         private void GmicThreadFinished(DialogResult result)
         {
-            workerThread.Join();
+            workerThread!.Join();
             workerThread = null;
 
             if (result == DialogResult.OK)
@@ -184,7 +187,7 @@ namespace GmicEffectPlugin
         {
             DialogResult result = DialogResult.Cancel;
 
-            OutputImageState state = server.OutputImageState;
+            OutputImageState state = server!.OutputImageState!;
 
             if (state.Error != null)
             {
@@ -192,7 +195,7 @@ namespace GmicEffectPlugin
             }
             else
             {
-                IReadOnlyList<IBitmap<ColorBgra32>> outputImages = state.OutputImages;
+                IReadOnlyList<IBitmap<ColorBgra32>> outputImages = state.OutputImages!;
                 string gmicCommandName = server.GmicCommandName;
 
                 if (outputImages.Count > 1)
@@ -259,7 +262,7 @@ namespace GmicEffectPlugin
                         // Place the full image on the clipboard when the size does not match the Paint.NET layer
                         // and prompt the user to save it.
                         // The resized image will not be copied to the Paint.NET canvas.
-                        Services.GetService<IClipboardService>().SetImage(output);
+                        Services.GetService<IClipboardService>()!.SetImage(output);
 
                         resizedImageSaveDialog.FileName = gmicCommandName + "_" + DateTime.Now.ToString("yyyyMMdd-THHmmss") + ".png";
                         if (resizedImageSaveDialog.ShowDialog(this) == DialogResult.OK)
@@ -301,17 +304,17 @@ namespace GmicEffectPlugin
             return result;
         }
 
-        private void UpdateOutputImage(object sender, EventArgs e)
+        private void UpdateOutputImage(object? sender, EventArgs e)
         {
-            GmicPipeServer server = (GmicPipeServer)sender;
+            GmicPipeServer server = (GmicPipeServer)sender!;
 
             DisposableUtil.Free(ref outputBitmap);
 
-            OutputImageState state = server.OutputImageState;
+            OutputImageState state = server.OutputImageState!;
 
             if (state.Error == null)
             {
-                IReadOnlyList<IBitmap<ColorBgra32>> outputImages = state.OutputImages;
+                IReadOnlyList<IBitmap<ColorBgra32>> outputImages = state.OutputImages!;
 
                 if (outputImages.Count == 1)
                 {
@@ -339,12 +342,12 @@ namespace GmicEffectPlugin
         {
             if (InvokeRequired)
             {
-                Invoke(new Action<Exception>((Exception ex) => Services.GetService<IExceptionDialogService>().ShowErrorDialog(this, ex.Message, ex)),
+                Invoke(new Action<Exception>((Exception ex) => Services.GetService<IExceptionDialogService>()!.ShowErrorDialog(this, ex.Message, ex)),
                        exception);
             }
             else
             {
-                Services.GetService<IExceptionDialogService>().ShowErrorDialog(this, exception.Message, exception);
+                Services.GetService<IExceptionDialogService>()!.ShowErrorDialog(this, exception.Message, exception);
             }
         }
 
@@ -352,12 +355,12 @@ namespace GmicEffectPlugin
         {
             if (InvokeRequired)
             {
-                Invoke(new Action<string>((string error) => Services.GetService<IExceptionDialogService>().ShowErrorDialog(this, error, string.Empty)),
+                Invoke(new Action<string>((string error) => Services.GetService<IExceptionDialogService>()!.ShowErrorDialog(this, error, string.Empty)),
                        message);
             }
             else
             {
-                Services.GetService<IExceptionDialogService>().ShowErrorDialog(this, message, string.Empty);
+                Services.GetService<IExceptionDialogService>()!.ShowErrorDialog(this, message, string.Empty);
             }
         }
 
@@ -424,12 +427,12 @@ namespace GmicEffectPlugin
                 this.dialog = dialog;
             }
 
-            public override void Post(SendOrPostCallback d, object state)
+            public override void Post(SendOrPostCallback d, object? state)
             {
                 dialog?.BeginInvoke(d, state);
             }
 
-            public override void Send(SendOrPostCallback d, object state)
+            public override void Send(SendOrPostCallback d, object? state)
             {
                 dialog?.Invoke(d, state);
             }

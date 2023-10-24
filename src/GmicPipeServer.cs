@@ -24,11 +24,11 @@ using PaintDotNet;
 using PaintDotNet.AppModel;
 using PaintDotNet.Effects;
 using PaintDotNet.Imaging;
-using PaintDotNet.IO;
 using PaintDotNet.Rendering;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Globalization;
 using System.IO.MemoryMappedFiles;
@@ -45,11 +45,11 @@ namespace GmicEffectPlugin
         private readonly List<GmicLayer> layers;
         private readonly List<MemoryMappedFile> memoryMappedFiles;
         private int activeLayerIndex;
-        private NamedPipeServerStream server;
+        private NamedPipeServerStream? server;
         private bool disposed;
 
         private readonly string pipeName;
-        private readonly SynchronizationContext synchronizationContext;
+        private readonly SynchronizationContext? synchronizationContext;
         private readonly SendOrPostCallback outputImageCallback;
         private readonly IArrayPoolService arrayPoolService;
         private readonly IBitmapEffectEnvironment effectEnvironment;
@@ -85,7 +85,7 @@ namespace GmicEffectPlugin
         /// -or-
         /// <paramref name="effectEnvironment"/> is null.
         /// </exception>
-        public GmicPipeServer(SynchronizationContext synchronizationContext,
+        public GmicPipeServer(SynchronizationContext? synchronizationContext,
                               IServiceProvider services,
                               IBitmapEffectEnvironment effectEnvironment)
         {
@@ -98,10 +98,12 @@ namespace GmicEffectPlugin
             this.effectEnvironment = effectEnvironment;
             documentSize = effectEnvironment.Document.Size;
             outputImageCallback = new SendOrPostCallback(OutputImageChangedCallback);
-            arrayPoolService = services.GetService<IArrayPoolService>();
+            arrayPoolService = services.GetService<IArrayPoolService>()!;
             layers = new List<GmicLayer>();
             memoryMappedFiles = new List<MemoryMappedFile>();
             replyStringBuilder = new StringBuilder(256);
+            GmicCommandName = string.Empty;
+
             disposed = false;
         }
 
@@ -109,9 +111,9 @@ namespace GmicEffectPlugin
 
         public string GmicCommandName { get; private set; }
 
-        public OutputImageState OutputImageState { get; private set; }
+        public OutputImageState? OutputImageState { get; private set; }
 
-        public event EventHandler OutputImageChanged;
+        public event EventHandler? OutputImageChanged;
 
         private enum InputMode
         {
@@ -220,14 +222,14 @@ namespace GmicEffectPlugin
 
             List<string> parameters = GetMessageParameters();
 
-            if (!TryGetValue(parameters[0], "command=", out string command))
+            if (!TryGetValue(parameters[0], "command=", out string? command))
             {
                 throw new InvalidOperationException("The first item must be a command.");
             }
 
             if (command.Equals("gmic_qt_get_max_layer_size", StringComparison.Ordinal))
             {
-                if (!TryGetValue(parameters[1], "mode=", out string mode))
+                if (!TryGetValue(parameters[1], "mode=", out string? mode))
                 {
                     throw new InvalidOperationException("The second item must be the input mode.");
                 }
@@ -243,12 +245,12 @@ namespace GmicEffectPlugin
             }
             else if (command.Equals("gmic_qt_get_cropped_images", StringComparison.Ordinal))
             {
-                if (!TryGetValue(parameters[1], "mode=", out string mode))
+                if (!TryGetValue(parameters[1], "mode=", out string? mode))
                 {
                     throw new InvalidOperationException("The second item must be the input mode.");
                 }
 
-                if (!TryGetValue(parameters[2], "croprect=", out string packedCropRect))
+                if (!TryGetValue(parameters[2], "croprect=", out string? packedCropRect))
                 {
                     throw new InvalidOperationException("The third item must be the crop rectangle.");
                 }
@@ -267,7 +269,7 @@ namespace GmicEffectPlugin
             }
             else if (command.Equals("gmic_qt_output_images", StringComparison.Ordinal))
             {
-                if (!TryGetValue(parameters[1], "mode=", out string mode))
+                if (!TryGetValue(parameters[1], "mode=", out string? mode))
                 {
                     throw new InvalidOperationException("The second item must be the output mode.");
                 }
@@ -403,10 +405,10 @@ namespace GmicEffectPlugin
             const int MaxStackAllocBufferSize = 128;
 
             Span<byte> replySizeBuffer = stackalloc byte[sizeof(int)];
-            server.ReadExactly(replySizeBuffer);
+            server!.ReadExactly(replySizeBuffer);
 
             int messageLength = BinaryPrimitives.ReadInt32LittleEndian(replySizeBuffer);
-            IArrayPoolBuffer<byte> bufferFromPool = null;
+            IArrayPoolBuffer<byte>? bufferFromPool = null;
 
             try
             {
@@ -617,8 +619,8 @@ namespace GmicEffectPlugin
         {
             string reply = string.Empty;
 
-            List<IBitmap<ColorBgra32>> outputImages = null;
-            Exception error = null;
+            List<IBitmap<ColorBgra32>>? outputImages = null;
+            Exception? error = null;
 
             try
             {
@@ -626,7 +628,7 @@ namespace GmicEffectPlugin
 
                 for (int i = 0; i < outputLayers.Count; i++)
                 {
-                    if (!TryGetValue(outputLayers[i], "layer=", out string packedLayerArgs))
+                    if (!TryGetValue(outputLayers[i], "layer=", out string? packedLayerArgs))
                     {
                         throw new InvalidOperationException("Expected a layer message argument.");
                     }
@@ -643,7 +645,7 @@ namespace GmicEffectPlugin
                     int height = int.Parse(layerArgs[2], NumberStyles.Integer, CultureInfo.InvariantCulture);
                     int stride = int.Parse(layerArgs[3], NumberStyles.Integer, CultureInfo.InvariantCulture);
 
-                    IBitmap<ColorBgra32> output = null;
+                    IBitmap<ColorBgra32>? output = null;
                     bool disposeOutput = true;
 
                     try
@@ -718,7 +720,7 @@ namespace GmicEffectPlugin
             }
         }
 
-        private void OutputImageChangedCallback(object state)
+        private void OutputImageChangedCallback(object? state)
         {
             OnOutputImageChanged();
         }
@@ -736,7 +738,7 @@ namespace GmicEffectPlugin
             }
         }
 
-        private static bool TryGetValue(string item, string prefix, out string value)
+        private static bool TryGetValue(string item, string prefix, [NotNullWhen(true)] out string? value)
         {
             if (item != null && item.StartsWith(prefix, StringComparison.Ordinal))
             {
@@ -757,7 +759,7 @@ namespace GmicEffectPlugin
 
             const int MaxStackAllocBufferSize = 256;
 
-            IArrayPoolBuffer<byte> bufferFromPool = null;
+            IArrayPoolBuffer<byte>? bufferFromPool = null;
 
             try
             {
@@ -777,7 +779,7 @@ namespace GmicEffectPlugin
 
                 Span<byte> messageBuffer = buffer.Slice(0, totalMessageLength);
 
-                server.Write(messageBuffer);
+                server!.Write(messageBuffer);
             }
             finally
             {

@@ -33,8 +33,8 @@ namespace GmicEffectPlugin
     [Description("Prompts the user to select a folder using a dialog appropriate for the current platform.")]
     internal sealed class PlatformFolderBrowserDialog : PlatformFileDialog
     {
-        private VistaFolderBrowserDialog vistaFolderBrowserDialog;
-        private FolderBrowserDialog classicFolderBrowserDialog;
+        private VistaFolderBrowserDialog? vistaFolderBrowserDialog;
+        private FolderBrowserDialog? classicFolderBrowserDialog;
         private string classicFolderBrowserDescription;
         private string vistaFolderBrowserTitle;
         private Environment.SpecialFolder rootFolder;
@@ -48,11 +48,11 @@ namespace GmicEffectPlugin
         {
             vistaFolderBrowserDialog = null;
             classicFolderBrowserDialog = null;
-            classicFolderBrowserDescription = null;
-            vistaFolderBrowserTitle = null;
+            classicFolderBrowserDescription = string.Empty;
+            vistaFolderBrowserTitle = string.Empty;
             rootFolder = Environment.SpecialFolder.Desktop;
             vistaFolderBrowserDefaultFolder = GetSpecialFolderPath(Environment.SpecialFolder.Desktop);
-            selectedPath = null;
+            selectedPath = string.Empty;
         }
 
         protected override void Dispose(bool disposing)
@@ -157,7 +157,7 @@ namespace GmicEffectPlugin
             set => selectedPath = value;
         }
 
-        protected override DialogResult RunDialog(IWin32Window owner)
+        protected override DialogResult RunDialog(IWin32Window? owner)
         {
             DialogResult result;
 

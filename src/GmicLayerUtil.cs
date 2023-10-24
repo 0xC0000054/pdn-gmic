@@ -56,7 +56,7 @@ namespace GmicEffectPlugin
         {
             FileVersionInfo info = FileVersionInfo.GetVersionInfo(GmicConfigDialog.GmicPath);
 
-            return info.FileDescription.StartsWith("32-bit", StringComparison.OrdinalIgnoreCase);
+            return info.FileDescription!.StartsWith("32-bit", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
