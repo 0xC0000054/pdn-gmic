@@ -54,6 +54,7 @@ namespace GmicEffectPlugin
         private readonly IArrayPoolService arrayPoolService;
         private readonly IBitmapEffectEnvironment effectEnvironment;
         private readonly SizeInt32 documentSize;
+        private readonly StringBuilder replyStringBuilder;
 #pragma warning restore IDE0032 // Use auto property
 
         private static readonly RectangleF WholeImageCropRect = new(0.0f, 0.0f, 1.0f, 1.0f);
@@ -100,6 +101,7 @@ namespace GmicEffectPlugin
             arrayPoolService = services.GetService<IArrayPoolService>();
             layers = new List<GmicLayer>();
             memoryMappedFiles = new List<MemoryMappedFile>();
+            replyStringBuilder = new StringBuilder(256);
             disposed = false;
         }
 
@@ -553,7 +555,7 @@ namespace GmicEffectPlugin
                 memoryMappedFiles.Capacity = layers.Count;
             }
 
-            StringBuilder reply = new();
+            replyStringBuilder.Clear();
 
             foreach (GmicLayer layer in layers)
             {
@@ -597,7 +599,7 @@ namespace GmicEffectPlugin
                     }
                 }
 
-                reply.AppendFormat(
+                replyStringBuilder.AppendFormat(
                     CultureInfo.InvariantCulture,
                     "{0},{1},{2},{3}\n",
                     mapName,
@@ -606,7 +608,7 @@ namespace GmicEffectPlugin
                     destinationStride.ToString(CultureInfo.InvariantCulture));
             }
 
-            return reply.ToString();
+            return replyStringBuilder.ToString();
         }
 
 #pragma warning disable IDE0060 // Remove unused parameter
