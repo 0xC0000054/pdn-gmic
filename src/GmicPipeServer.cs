@@ -756,7 +756,7 @@ namespace GmicEffectPlugin
         [SkipLocalsInit]
         private void SendReplyToClient(string message)
         {
-            ArgumentNullException.ThrowIfNull(nameof(message));
+            ArgumentNullException.ThrowIfNull(message, nameof(message));
 
             const int MaxStackAllocBufferSize = 256;
 
