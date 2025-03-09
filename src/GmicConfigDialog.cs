@@ -58,7 +58,7 @@ namespace GmicEffectPlugin
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             InitializeComponent();
-            Text = GmicEffect.StaticName;
+            Text = GmicEffect.StaticName + " v" + typeof(GmicConfigDialog).Assembly.GetName().Version!.ToString(3);
             outputBitmap = null;
             workerThread = null;
             dialogSynchronizationContext = new GmicDialogSynchronizationContext(this);
