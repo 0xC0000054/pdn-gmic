@@ -441,8 +441,10 @@ namespace GmicEffectPlugin
                 if (bytes[bytes.Length - 1] == Separator)
                 {
                     // A message with multiple values uses \n as the separator and terminator.
-                    foreach (ReadOnlySpan<byte> parameter in bytes.Split(Separator))
+                    foreach (Range range in bytes.Split(Separator))
                     {
+                        ReadOnlySpan<byte> parameter = bytes[range];
+
                         // Empty strings are skipped.
                         if (parameter.Length > 0)
                         {
