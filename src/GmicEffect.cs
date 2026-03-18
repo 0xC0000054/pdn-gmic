@@ -265,7 +265,7 @@ namespace GmicEffectPlugin
             {
                 using (IBitmapLock<ColorBgra32> dst = bitmapEffectOutput.LockBgra32())
                 {
-                    effectInput!.CopyPixels(dst.Buffer, dst.BufferStride, dst.BufferSize, bitmapEffectOutput.Bounds);
+                    effectInput!.CopyPixels(dst.AsRegionPtr(), bitmapEffectOutput.Bounds.Location);
                 }
             }
         }
